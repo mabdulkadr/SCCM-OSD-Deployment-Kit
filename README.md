@@ -1,4 +1,4 @@
-# 🚀 SCCM OSD Deployment Kit v1.0
+# 🚀 SCCM OSD Deployment Kit
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg)
@@ -68,6 +68,67 @@ PreStaging/         ├── .ps1 + .ps1     Enrollment/
 
 ---
 
+## 📸 Screenshots
+
+### Boot Image Configuration
+
+The Boot Image must include WinPE-NetFx and WinPE-PowerShell optional components:
+
+![Boot Image - Optional Components](images/BootImage.png)
+
+### Application Packages
+
+The SCCM-OSD-Deployment-Kit package has been uploaded and is ready for distribution:
+
+![Application Packages](<images/App Packages.png>)
+
+> ✅ Package ID: `QU100100` — Distribute to all Distribution Points before using the Task Sequence.
+
+### Deployment Wizard
+
+The interactive WPF wizard that appears during OSD to collect deployment parameters:
+
+![Deployment Wizard](images/DeploymentWizard.png)
+
+### Pre-Staging Tool
+
+The WPF GUI for remote device registration via AdminService REST API:
+
+![Pre-Staging Tool](images/SCCM-OSD-PreStaging.png)
+
+### Task Sequences Overview
+
+The three Task Sequences in SCCM Console:
+
+![Task Sequences](images/Task\ Sequences.png)
+
+### On-Site Deployment (9 Steps)
+
+| Step | Screenshot |
+|------|------------|
+| Step 1 | ![Step 1](<images/Deploy Win11 25H2 - [On-site] -01.png>) |
+| Step 2 | ![Step 2](<images/Deploy Win11 25H2 - [On-site] -02.png>) |
+| Step 3 | ![Step 3](<images/Deploy Win11 25H2 - [On-site] -03.png>) |
+| Step 4 | ![Step 4](<images/Deploy Win11 25H2 - [On-site] -04.png>) |
+| Step 5 | ![Step 5](<images/Deploy Win11 25H2 - [On-site] -05.png>) |
+| Step 6 | ![Step 6](<images/Deploy Win11 25H2 - [On-site] -06.png>) |
+| Step 7 | ![Step 7](<images/Deploy Win11 25H2 - [On-site] -07.png>) |
+| Step 8 | ![Step 8](<images/Deploy Win11 25H2 - [On-site] -08.png>) |
+| Step 9 | ![Step 9](<images/Deploy Win11 25H2 - [On-site] -09.png>) |
+
+### Remote Deployment
+
+![Remote Deployment](<images/Deploy Win11 25H2 - [Remotely] -01.png>)
+
+### In-Place Upgrade
+
+| Step | Screenshot |
+|------|------------|
+| Step 1 | ![Step 1](<images/Upgrade to Win11 25H2 -01.png>) |
+| Step 2 | ![Step 2](<images/Upgrade to Win11 25H2 -02.png>) |
+
+---
+
 ## ⚙️ Configuration Required
 
 > **Before using any script**, replace the placeholders below with your organization's actual values.
@@ -106,6 +167,16 @@ SCCM-OSD-Deployment-Kit/
 ├── autounattend.md                         # 📖 Unattend documentation
 ├── technical-architecture.md               # 📐 Full architecture reference
 │
+├── images/                                 # 📸 Screenshots for documentation
+│   ├── BootImage.png                       # Boot Image Optional Components
+│   ├── App Packages.png                    # Application Packages
+│   ├── DeploymentWizard.png                # Deployment Wizard UI
+│   ├── SCCM-OSD-PreStaging.png            # Pre-Staging Tool UI
+│   ├── Task Sequences.png                  # Task Sequences overview
+│   ├── Deploy Win11 25H2 - [On-site] *.png # On-site deployment (9 steps)
+│   ├── Deploy Win11 25H2 - [Remotely] *.png # Remote deployment
+│   └── Upgrade to Win11 25H2 *.png         # In-place upgrade
+│
 ├── DeploymentWizard/                       # 🖥 Phase 1 — Interactive OSD Wizard
 │   ├── Start-DeploymentWizard.ps1          # 🚀 SCCM TS wrapper (validates, launches, verifies)
 │   ├── Start-DeploymentWizard.md           # 📖 Wrapper architecture doc
@@ -120,7 +191,6 @@ SCCM-OSD-Deployment-Kit/
 │
 ├── SCCM-OSD-PreStaging/                    # ⚙️ Phase 0 — Off-Site Pre-Staging
 │   ├── SCCM-OSD-PreStaging.ps1             # 🖥 WPF GUI (AdminService REST API)
-│   ├── SCCM-OSD-PreStaging.exe             # 📦 Compiled EXE (PSWrap, self-signed)
 │   ├── SCCM-OSD-PreStaging.md              # 📖 REST API + SSL architecture doc
 │   ├── README.md                           # 📖 Quick-reference README
 │   └── Helpdesk OSD Pre-Staging Operator.xml # 🔐 SCCM RBAC role (Create + OSD Variables)
@@ -261,8 +331,6 @@ The technician registers the device from their office. The employee boots from n
 ```powershell
 # Technician runs from office:
 .\SCCM-OSD-PreStaging\SCCM-OSD-PreStaging.ps1
-# Or double-click:
-.\SCCM-OSD-PreStaging\SCCM-OSD-PreStaging.exe
 ```
 
 ### Scenario 3 — In-Place Upgrade
@@ -280,7 +348,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 
 ## 📦 SCCM Package Setup
 
-Before using the Task Sequence, you must create and distribute the SCCM package:
+The toolkit has been uploaded as an SCCM **Application Package** for easy distribution and reuse:
 
 | Property | Value |
 |----------|-------|
@@ -288,6 +356,7 @@ Before using the Task Sequence, you must create and distribute the SCCM package:
 | **Package ID** | `QU100100` |
 | **Version** | `1.0` |
 | **Location** | Software Library → Application Management → Packages |
+| **Status** | ✅ Uploaded and ready for distribution |
 
 ### Package Contents
 
@@ -304,10 +373,9 @@ The package contains all files used during OSD:
 
 ### Distribution
 
-After creating the package:
-
 1. **Distribute Content** to all Distribution Points
 2. Verify **Content Status** shows **Success** before using the Task Sequence
+3. Reference the package in your Task Sequence using **Package ID: `QU100100`**
 
 ---
 

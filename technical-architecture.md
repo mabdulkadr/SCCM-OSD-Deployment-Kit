@@ -79,7 +79,6 @@ SCCM-OSD-Deployment-Kit/
 │   └── Schedule-PostOSD-Enrollment.md
 ├── SCCM-OSD-PreStaging/
 │   ├── SCCM-OSD-PreStaging.ps1
-│   ├── SCCM-OSD-PreStaging.exe
 │   ├── SCCM-OSD-PreStaging.md
 │   ├── README.md
 │   └── Helpdesk OSD Pre-Staging Operator.xml
