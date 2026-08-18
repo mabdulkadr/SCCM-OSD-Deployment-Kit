@@ -407,6 +407,48 @@ Total              ~240 MB
 
 > 💡 WinPE-WMI is no longer required (device info + connectivity tests removed).
 
+### 📦 Windows PE Optional Components
+
+These components must be added to the Boot Image in SCCM:
+
+| Component | Size | Purpose |
+|-----------|------|---------|
+| **Microsoft .NET (WinPE-NetFx)** | ~195 MB | Provides .NET Framework support in WinPE — required for WPF UI, AD authentication, LDAP protocols, and the `System.DirectoryServices.Protocols` assembly |
+| **Windows PowerShell (WinPE-PowerShell)** | ~45 MB | Adds PowerShell execution capability — required to run `Start-DeploymentWizard.ps1` and all other deployment scripts |
+
+### Why These Components Are Required
+
+Without these components, the Deployment Wizard and other scripts **cannot run** in WinPE:
+
+```
+Boot Image (WinPE)
+├── Without WinPE-NetFx
+│   ├── ❌ WPF wizard cannot render (no PresentationFramework)
+│   ├── ❌ AD authentication fails (no PrincipalContext)
+│   ├── ❌ LDAP browsing fails (no LdapConnection)
+│   └── ❌ Script crashes on Add-Type
+│
+└── With WinPE-NetFx + WinPE-PowerShell
+    ├── ✅ WPF wizard renders correctly
+    ├── ✅ AD authentication works
+    ├── ✅ LDAP OU browsing works (pure .NET)
+    ├── ✅ All scripts execute via PowerShell
+    └── ✅ Task Sequence variables written successfully
+```
+
+### How to Add Optional Components
+
+1. Open **SCCM Console** → **Software Library** → **Boot Images**
+2. Right-click your boot image → **Properties**
+3. Go to **Optional Components** tab
+4. Click **Add** → select:
+   - **Microsoft .NET (WinPE-NetFx)**
+   - **Windows PowerShell (WinPE-PowerShell)**
+5. Click **OK** → **Apply**
+6. **Update Distribution Points** — the boot image must be redistributed to all PXE DPs
+
+> ⚠️ After adding components, the boot image size increases by ~240 MB. This is normal and expected.
+
 ### ⚙️ Configuration Notes
 
 - Add components via SCCM Console → Software Library → Boot Images

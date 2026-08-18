@@ -15,6 +15,23 @@
 
 **SCCM OSD Deployment Kit** transforms SCCM's traditional **zero-touch** OSD into a **user-driven** deployment experience. Built for IT support teams to simplify and accelerate Windows 11 installation across the organization — with interactive wizards that collect device details before deployment, eliminating manual post-install configuration.
 
+### Why This Toolkit?
+
+This toolkit is a **lightweight, self-contained alternative** to popular SCCM OSD front-end tools like [UI++](https://uiplusplus.tplant.com.au/) and [TsGui](https://github.com/MikePohatu/TsGui). While these tools are powerful and feature-rich, this kit offers a simpler approach:
+
+| Feature | SCCM OSD Deployment Kit | UI++ | TsGui |
+|---------|------------------------|------|-------|
+| **Installation** | Copy folder — no dependencies | Compiled EXE + XML config | Module + XML config |
+| **Configuration** | CLI parameters — no XML editing | XML-based | XML-based |
+| **Architecture** | Single .ps1 file per component | External binary | External module |
+| **WinPE Support** | Native `.NET LdapConnection` (no ADSI) | Requires components | Requires components |
+| **Pre-Staging** | Built-in (AdminService REST API) | Not included | Not included |
+| **Post-OSD** | Built-in (Entra ID, MDM, Co-Management) | Not included | Not included |
+| **Email Reporting** | Built-in (Graph API) | Not included | Not included |
+| **RBAC Role** | Included (least-privilege) | Manual | Manual |
+
+> **Best for:** Teams who want a simple, zero-dependency solution that covers the full deployment lifecycle — from pre-staging to post-deployment provisioning — without external binaries, XML configuration, or complex setup.
+
 The toolkit covers **three deployment scenarios** that address every support situation:
 
 | Scenario | Situation | How It Works |
@@ -204,9 +221,23 @@ Full internal reference: data-flow diagrams, state machine, 12-function index, L
 | PowerShell | 5.1+ | Built into Windows 10/11. SCCM TS always runs PS 5.1. |
 | .NET Framework | 4.6.2+ | WPF, AD auth, LDAP |
 | SCCM/MECM | CB 1902+ | `Microsoft.SMS.TSEnvironment` COM interface |
-| WinPE | 10.0.17763+ | WinPE-PowerShell (~45 MB) + WinPE-NetFX (~195 MB) |
+| WinPE | 10.0.17763+ | See **Boot Image Setup** below |
 | AD Domain | Line-of-sight to DC | Auth, LDAP, domain join. Ports 389, 88, 445. |
 | SCCM AdminService | HTTPS on SMS Provider | **Only for Pre-Staging Tool** |
+
+### Boot Image Setup (Windows PE Optional Components)
+
+The Boot Image must include these **Optional Components** for the Deployment Wizard to run:
+
+| Component | Size | Purpose |
+|-----------|------|---------|
+| **Microsoft .NET (WinPE-NetFx)** | ~195 MB | WPF UI, AD auth, LDAP protocols |
+| **Windows PowerShell (WinPE-PowerShell)** | ~45 MB | Execute all deployment scripts |
+
+**How to add:**
+1. SCCM Console → Software Library → Boot Images → right-click → Properties
+2. Optional Components tab → Add → select both components
+3. Update Distribution Points after adding
 
 ---
 
