@@ -1,0 +1,8 @@
+<SMS_Roles>
+  <SMS_Role CopiedFromID="SMS0001R" RoleName="Helpdesk OSD Pre-Staging Operator" RoleDescription="">
+    <Operations>
+      <Operation GrantedOperations="4225" ObjectTypeID="1" />
+      <Operation GrantedOperations="524289" ObjectTypeID="6" />
+    </Operations>
+  </SMS_Role>
+</SMS_Roles>
