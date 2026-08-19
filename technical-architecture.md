@@ -1,497 +1,342 @@
-# 📐 SCCM OSD Deployment Kit — Technical Architecture
+# 📐 Technical Architecture
 
-![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg)
-![Platform](https://img.shields.io/badge/Platform-WinPE%20%2B%20Full%20OS-lightgrey.svg)
-![GUI](https://img.shields.io/badge/GUI-WPF-purple.svg)
-![LDAP](https://img.shields.io/badge/LDAP-.NET%20LdapConnection-orange.svg)
-![Version](https://img.shields.io/badge/version-1.0-green.svg)
+This document covers the internal architecture of the SCCM OSD Deployment Kit. It explains **how** the toolkit works under the hood — for users who want to understand, modify, or troubleshoot the scripts.
+
+> **Most users don't need this.** Start with the [main README](../README.md) and per-module docs. Come back here when you need deeper understanding.
 
 ---
 
-## 🧭 Table of Contents
+## 🏗 High-Level Architecture
 
-- [📐 SCCM OSD Deployment Kit — Technical Architecture](#-sccm-osd-deployment-kit--technical-architecture)
-  - [🧭 Table of Contents](#-table-of-contents)
-  - [🏗 Architecture](#-architecture)
-    - [📁 File Organization](#-file-organization)
-  - [🔀 Data Flow](#-data-flow)
-  - [🧠 Script State Machine](#-script-state-machine)
-    - [🔄 State Transitions](#-state-transitions)
-  - [🔐 Credential Flow](#-credential-flow)
-  - [📝 Task Sequence Variables](#-task-sequence-variables)
-  - [🔧 Functions (12)](#-functions-12)
-    - [🖥 WPF / UI Helpers](#-wpf--ui-helpers)
-    - [🌐 Network / Data Helpers](#-network--data-helpers)
-    - [📥 Data Retrieval](#-data-retrieval)
-    - [🔑 Authentication / Output](#-authentication--output)
-  - [📡 LDAP Browsing (WinPE-Compatible)](#-ldap-browsing-winpe-compatible)
-    - [❓ Why LdapConnection instead of DirectorySearcher?](#-why-ldapconnection-instead-of-directorysearcher)
-    - [🔄 LDAP Bind Strategy](#-ldap-bind-strategy)
-  - [🎨 Design System](#-design-system)
-    - [🖥 Window Layout](#-window-layout)
-    - [📐 Component Specifications](#-component-specifications)
-  - [🎨 Color Palette](#-color-palette)
-  - [🐛 Error Handling](#-error-handling)
-  - [💻 WinPE Requirements](#-winpe-requirements)
-    - [🔧 Prerequisites](#-prerequisites)
-    - [⚙️ Configuration Notes](#️-configuration-notes)
-  - [⚡ Performance Considerations](#-performance-considerations)
-    - [🚀 Optimizations Applied](#-optimizations-applied)
-  - [📜 License](#-license)
-  - [👤 Author](#-author)
+```
+SCCM OSD Deployment Kit
+        │
+        ├── Phase 0: Pre-Staging (SCCM-OSD-PreStaging/)
+        │       └── Standalone WPF GUI for helpdesk operators
+        │
+        ├── Phase 1: Deployment Wizard (DeploymentWizard/)
+        │       ├── Start-DeploymentWizard.ps1 (TS wrapper)
+        │       └── DeploymentWizard.ps1 (WPF application)
+        │
+        └── Phase 2: Post-OSD Enrollment (Post-OSD-Enrollment/)
+                ├── Schedule-PostOSD-Enrollment.ps1 (scheduler)
+                └── Post-OSD-Enrollment-Accelerator.ps1 (engine)
+```
+
+Each phase is **independent** — they share no code, only data flow through TSEnvironment variables.
 
 ---
 
-## 🏗 Architecture
-
-```
-Single .ps1 file (embedded all-in-one design)
-├── param() — 9 configurable parameters
-├── Parse software config ("Name|TSVar|Checked" → hashtable)
-├── Add-Type — PresentationFramework, PresentationCore, WindowsBase,
-│              System.DirectoryServices, System.DirectoryServices.Protocols
-├── [xml]$XAML = @" ... "@ — XAML string with PS variable interpolation
-├── XamlReader.Load → WPF Window object (Topmost=True)
-├── Control binding — $Window.FindName() for all named elements
-├── 12 Functions (helpers, data, UI, auth, output)
-├── 6 Event Handlers (login, search, selection, refresh, deploy, cancel)
-├── try/catch on all dialogs with MessageBox fallback (WinPE-safe)
-└── Window.ShowDialog() — Modal event loop entry point
-```
-
-### 📁 File Organization
+## 📁 File Organization
 
 ```
 SCCM-OSD-Deployment-Kit/
-├── README.md
-├── autounattend.xml
+├── README.md                              ← Project overview
+├── autounattend.xml                       ← Windows OOBE bypass
 ├── autounattend.md
-├── technical-architecture.md       # This technical reference
+├── Remove-StaleADComputer.ps1             ← WinPE: cleans stale AD objects
+├── technical-architecture.md              ← This file
+│
 ├── DeploymentWizard/
-│   ├── DeploymentWizard.ps1        # Main WPF wizard (~1550 lines)
-│   ├── Start-DeploymentWizard.ps1  # SCCM Task Sequence wrapper
+│   ├── Start-DeploymentWizard.ps1         ← TS entry point (wrapper)
+│   ├── DeploymentWizard.ps1               ← WPF wizard application
 │   ├── DeploymentWizard.md
 │   └── Start-DeploymentWizard.md
+│
 ├── Post-OSD-Enrollment/
-│   ├── Post-OSD-Enrollment-Accelerator.ps1
-│   ├── Schedule-PostOSD-Enrollment.ps1
+│   ├── Schedule-PostOSD-Enrollment.ps1    ← Retry + cleanup scheduler
+│   ├── Post-OSD-Enrollment-Accelerator.ps1← 6-section provisioning engine
 │   ├── Post-OSD-Enrollment-Accelerator.md
 │   └── Schedule-PostOSD-Enrollment.md
+│
 ├── SCCM-OSD-PreStaging/
-│   ├── SCCM-OSD-PreStaging.ps1
+│   ├── SCCM-OSD-PreStaging.ps1            ← WPF GUI
 │   ├── SCCM-OSD-PreStaging.md
 │   ├── README.md
-│   └── Helpdesk OSD Pre-Staging Operator.xml
-├── Report/
-│   ├── Get-OSDDeploymentReport.ps1
-│   ├── Send-QUExchangeMail.psm1
-│   └── Send-QUExchangeMail.md
-└── Remove-StaleADComputer.ps1
+│   └── Helpdesk OSD Pre-Staging Operator.xml ← RBAC role
+│
+└── Report/
+    ├── Get-OSDDeploymentReport.ps1        ← HTML reports
+    ├── Send-QUExchangeMail.psm1           ← Graph API email module
+    ├── Get-OSDDeploymentReport.md
+    └── Send-QUExchangeMail.md
 ```
 
 ---
 
 ## 🔀 Data Flow
 
-```
-┌───────────────────────────────────────────────────────────────────┐
-│                        DEPLOYMENT FLOW                            │
-│                                                                   │
-│  param()                    ┌─────────────────┐                   │
-│  ┌──────────┐               │   USER INPUT     │                  │
-│  │ Defaults │──────────────▶│   (WPF Controls) │                 │
-│  │ or CLI   │               │                   │                 │
-│  └──────────┘               │ UsernameBox       │                 │
-│                             │ PasswordBox       │                 │
-│  ┌──────────┐               │ ComputerNameBox   │                 │
-│  │ Software │──────────────▶│ OUSearchBox      │                 │
-│  │ Array    │               │ OUDataGrid        │                  │
-│  └──────────┘               │ SoftwarePanel     │                  │
-│                             │    (CheckBoxes)   │                  │
-│  ┌──────────┐               └────────┬──────────┘                  │
-│  │ LDAP      │                        │                            │
-│  │ LdapConn. │──────────────▶ Update-OUList                        │
-│  │ + creds   │               (auto on load + after sign-in)       │
-│  └──────────┘                        │                            │
-│                                      ▼                            │
-│                           ┌──────────────────┐                    │
-│                           │   VALIDATION      │                  │
-│                           │ (Deploy button)   │                  │
-│                           │                   │                  │
-│                           │ ✓ Authenticated?  │                  │
-│                           │ ✓ Name not empty? │                  │
-│                           │ ✓ Valid chars?    │                  │
-│                           │ ✓ ≤ 15 chars?    │                   │
-│                           │ ✓ OU selected?    │                  │
-│                           └────────┬─────────┘                   │
-│                                    ▼                             │
-│              ┌──────────────────────────────────────┐            │
-│              │    Write-SCCMVariables               │            │
-│              │    COM Microsoft.SMS.TSEnvironment   │            │
-│              │                                      │            │
-│              │  OSDComputerName    = computer name  │            │
-│              │  OSDDomainName      = domain FQDN    │            │
-│              │  OSDDomainOUName    = selected OU DN │            │
-│              │  OSDJoinAccount     = domain\user    │            │
-│              │  OSDJoinPassword    = **** (masked)  │            │
-│              │  OSDRegisteredOrgName = org name     │            │
-│              │  App_*             = TRUE            │            │
-│              └──────────────────────────────────────┘            │
-│                                    ▼                             │
-│              ┌──────────────────────────────────────┐            │
-│              │    Result Dialog (Back / Deploy)     │            │
-│              │    Back → return to wizard           │            │
-│              │    Deploy → Window.Close()           │            │
-│              └──────────────────────────────────────┘            │
-└───────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🧠 Script State Machine
-
-| Variable | Type | States | Description |
-|----------|------|--------|-------------|
-| `$script:IsLoggedIn` | `[bool]` | `$false` → `$true` | Authentication state |
-| `$script:JoinPass` | `[string]` | `""` → `plaintext` | Stored domain join password (also used for LDAP bind) |
-| `$script:AuthAttempts` | `[int]` | `0` → `5` (lockout) | Failed sign-in counter |
-| `$script:Closing` | `[bool]` | `$false` → `$true` | Window shutdown guard |
-| `$script:OUData` | `[array]` | `$null` → populated | Cached LDAP query results |
-| `$script:SoftCbs` | `[CheckBox[]]` | Generated at init | Dynamic software checkboxes |
-
-### 🔄 State Transitions
+### Deployment Wizard
 
 ```
-              ┌──────────┐
-              │  START    │
-              └────┬─────┘
-                   │ Window.Loaded → load OU list (anonymous bind)
-                   ▼
-    ┌──────────────────────────────┐
-    │   READY  (Status: orange)    │
-    │   OU: "Sign in to load"      │ (if anonymous fails)
-    └──────────┬───────────────────┘
-               │ User clicks [Sign In]
-               ├── Auth FAIL  → AuthAttempts++
-               │                Attempts ≥ 5? → LOCKED (red)
-               │                Else → back to READY
-               │   Auth OK    → AuthAttempts = 0
-               │                Update-OUList with credentials
-               ▼
-    ┌──────────────────────────────────────────┐
-    │  AUTHENTICATED (green) + OUs loaded      │
-    │  Summary backgrounds: green when filled  │
-    └──────────┬───────────────────────────────┘
-               │ User fills name + OU + software
-               ▼
-    ┌──────────────────────────────────────────┐
-    │  VALIDATED  (Deploy click)               │
-    │  → Write TS variables                    │
-    │  → Result dialog (Back / Deploy)         │
-    │  → Deploy: Window.Close()                │
-    └──────────────────────────────────────────┘
+User Input (WPF Controls)
+    │
+    ├─ UsernameBox + PasswordBox ────────────▶ AD Authentication
+    ├─ ComputerNameBox ──────────────────────▶ OSDComputerName
+    ├─ OUDataGrid (LDAP browse) ─────────────▶ OSDDomainOUName
+    ├─ SoftwarePanel (checkboxes) ───────────▶ App_* variables
+    └─ Language radio ───────────────────────▶ OSDLanguage
+    │
+    ▼
+Validation (Deploy button)
+    │
+    ▼
+Write-SCCMVariables → COM Microsoft.SMS.TSEnvironment
+    │
+    ▼
+Downstream TS steps consume the variables automatically
+```
+
+### Post-OSD Enrollment
+
+```
+TS ends → Schedule-PostOSD-Enrollment.ps1 runs
+    │
+    ├─ Copies accelerator to C:\Windows\Temp\PostOSD\
+    ├─ Registers PostOSD-Enrollment task (AtLogOn, every 5 min × 30 min)
+    └─ Registers PostOSD-Cleanup task (once at +35 min)
+    │
+    ▼
+TS continues → Post-OSD-Enrollment-Accelerator.ps1 runs once in TS context
+    │
+    ▼
+Machine reboots → AutoLogon → PostOSD-Enrollment fires
+    │
+    ├─ Accelerator runs (6 sections in dependency order)
+    ├─ If exit 3010 + no flag → reboot (single reboot guard)
+    └─ Repeats every 5 min until T+30
+    │
+    ▼
+T+35 → PostOSD-Cleanup fires
+    │
+    └─ Deletes both tasks + copied script + flag
+```
+
+### Pre-Staging Tool
+
+```
+Operator enters device details → clicks Pre-Stage
+    │
+    ├─ POST ImportMachineEntry (MAC + Name → ResourceID)
+    ├─ GET SMS_R_System (verify record exists)
+    └─ POST SMS_MachineSettings (inject 8+ OSD variables)
+    │
+    ▼
+Device is PXE-ready in SCCM
 ```
 
 ---
 
-## 🔐 Credential Flow
+## 🧠 Deployment Wizard State Machine
+
+| State | Trigger | Next State |
+|-------|---------|------------|
+| **Loaded** | Window opens | Anonymous LDAP attempt → READY |
+| **READY** | OU list loaded (or "Sign in to load" if anonymous failed) | User clicks Sign In → AUTH |
+| **AUTH** | Credential check | Success → AUTHENTICATED / Fail → READY (or LOCKED after 5 fails) |
+| **AUTHENTICATED** | OUs loaded with credentials | User fills form → VALIDATED |
+| **VALIDATED** | Deploy clicked | Write TS variables → Result dialog → CLOSED |
+| **LOCKED** | 5 failed auth attempts | Must restart wizard |
+
+---
+
+## � Credential Flow
 
 ```
-PasswordBox.Password → [Sign In] → ValidateCredentials
-       ↓ success
-$script:JoinPass = password  (plaintext, in-memory only)
-       ↓
-       ├── Update-OUList (LDAP bind with NetworkCredential)
-       │    ↓
-       │   AD returns OU list → DataGrid populated
-       │
-       ↓
-[Deploy] → Write-SCCMVariables → COM TSEnvironment
-       ↓
-┌──────────────────────────────────────────────────────────┐
-│ $tsenv.Value("OSDJoinAccount")  = domain\user           │
-│ $tsenv.Value("OSDJoinPassword") = password (hidden var) │
-│ $tsenv.Value("OSDDomainName")   = domain FQDN           │
-│ $tsenv.Value("OSDDomainOUName") = selected OU DN        │
-│ $tsenv.Value("OSDComputerName") = new computer name     │
-│ $tsenv.Value("OSDRegisteredOrgName") = org name         │
-│ $tsenv.Value("App_*")           = TRUE / not set        │
-└──────────────────────────────────────────────────────────┘
+PasswordBox.Password
+    │
+    ├─ [Sign In] → PrincipalContext.ValidateCredentials
+    │     │
+    │     ├─ Success → $script:JoinPass = password (in-memory only)
+    │     │
+    │     └─ Update-OUList (LDAP bind with NetworkCredential)
+    │
+    └─ [Deploy] → Write-SCCMVariables
+            │
+            └─ TSEnvironment:
+                  OSDJoinAccount   = domain\user
+                  OSDJoinPassword  = password (hidden)
+                  OSDComputerName  = name
+                  OSDDomainOUName  = selected OU DN
+                  OSDLanguage      = en-US | ar-SA
+                  OSDRegisteredOrgName = org name
+                  App_*            = TRUE / not set
 ```
 
-**🛡 Security:** Password stored only in `$script:JoinPass` (never written to disk or log). The SCCM variable `OSDJoinPassword` is flagged as hidden. Max 5 failed auth attempts before lockout. Credentials also reused for authenticated LDAP bind in WinPE.
+**Security guarantees:**
+
+- Password only stored in `$script:JoinPass` (memory only, never disk)
+- `OSDJoinPassword` is a hidden TS variable (masked in `smsts.log`)
+- 5-attempt lockout prevents brute force
+- Credentials reused for authenticated LDAP bind
 
 ---
 
-## 📝 Task Sequence Variables
+## 📡 LDAP Browsing in WinPE
 
-| PS Value / Control | TS Variable | Type | Auto-Consumed? |
-|--------------------|-------------|------|----------------|
-| `$ComputerNameBox.Text` | `OSDComputerName` | Built-in | Yes |
-| `$script:Domain` | `OSDDomainName` | Built-in | Yes |
-| `$sel.DN` | `OSDDomainOUName` | Built-in | Yes |
-| `$UsernameBox.Text` | `OSDJoinAccount` | Built-in | Yes |
-| `$script:JoinPass` | `OSDJoinPassword` | Built-in | Yes |
-| `$script:Org` | `OSDRegisteredOrgName` | Built-in | Yes |
-| Checkbox (checked) | `App_*` | Custom | No — use `%VarName%` |
+Traditional `DirectorySearcher` (ADSI COM) **does not work** in WinPE because the COM object can't be instantiated.
 
----
+**Solution:** Use `System.DirectoryServices.Protocols.LdapConnection` — pure .NET TCP socket, no COM dependency.
 
-## 🔧 Functions (12)
-
-### 🖥 WPF / UI Helpers
-
-| Function | Parameters | Purpose |
-|----------|-----------|---------|
-| `New-Brush` | `-Hex` | Creates frozen SolidColorBrush from #RRGGBB |
-| `Write-UiLog` | `-M`, `-L` | Thread-safe color-coded Message Center log entry |
-| `Show-AuthBanner` | `-Type`, `-M` | Displays color-coded authentication result banner |
-| `Hide-AuthBanner` | — | Collapses the authentication banner |
-| `Show-CustomDialog` | `-Type`, `-T`, `-M` | Styled modal dialog with MessageBox fallback; XML-escaped parameters |
-
-### 🌐 Network / Data Helpers
-
-| Function | Parameters | Purpose |
-|----------|-----------|---------|
-| `Test-TcpReach` | `-H`, `-P`, `-TO` | Async TCP port test (LDAP 389, Kerberos 88) with timeout |
-| `ConvertTo-FriendlyOUPath` | `-DN` | DN → "Top / Parent / Child" human-readable path |
-
-### 📥 Data Retrieval
-
-| Function | Parameters | Purpose |
-|----------|-----------|---------|
-| `Update-OUList` | — | LdapConnection → DataGrid; authenticated bind if logged in, anonymous fallback |
-| `Filter-OUDataGrid` | `-F` | Client-side live search (Arabic-compatible Unicode matching via `-like`) |
-| `Update-Summary` | — | Refreshes all 5 summary pills; individual green/red backgrounds per row |
-
-### 🔑 Authentication / Output
-
-| Function | Parameters | Purpose |
-|----------|-----------|---------|
-| `Test-ADAuthentication` | `-U`, `-P` | PrincipalContext.ValidateCredentials; returns hashtable |
-| `Write-SCCMVariables` | `-CN`, `-OU`, `-OUN`, `-DN`, `-JU`, `-JP`, `-Apps` | COM TSEnvironment → writes all variables |
-
----
-
-## 📡 LDAP Browsing (WinPE-Compatible)
-
-### ❓ Why LdapConnection instead of DirectorySearcher?
-
-| | DirectorySearcher (old) | LdapConnection (current) |
+| | DirectorySearcher | LdapConnection |
 |---|---|---|
-| **Underlying technology** | ADSI COM (adsldp.dll) | Pure .NET TCP socket |
-| **Works in WinPE?** | No — `0x80005000` / `E_ADS_ERROR` | Yes |
-| **Assembly** | System.DirectoryServices | System.DirectoryServices.Protocols |
-| **Bind mode** | Implicit via COM | Explicit: anonymous or NetworkCredential |
-| **Search API** | FindAll() | SendRequest(SearchRequest) |
-| **Result parsing** | ResultPropertyCollection | SearchResultEntry.Attributes → DirectoryAttribute.GetValues([string]) |
+| Works in WinPE? | ❌ No | ✅ Yes |
+| Underlying tech | ADSI COM | Pure .NET |
+| Bind | Implicit | Explicit (anonymous or credentialed) |
 
-### 🔄 LDAP Bind Strategy
+### Bind Strategy
 
 ```
 Window.Loaded
-    ├── Not logged in → Anonymous bind
-    │   ├── Success (domain-joined Windows) → OUs loaded
-    │   └── Fail (WinPE) → "Sign in to load OUs" (orange)
     │
-    └── After Sign In → Update-OUList called again
-        └── NetworkCredential(Username, JoinPass, Domain) bind
-            └── Success → 137 OUs loaded, DataGrid populated
+    ├─ Not logged in → try anonymous bind
+    │     ├─ Success → OUs loaded
+    │     └─ Fail (typical in WinPE) → "Sign in to load OUs"
+    │
+    └─ After sign-in → re-bind with NetworkCredential
+          └─ Authenticated OU list loaded into DataGrid
 ```
+
+---
+
+## 🔧 Deployment Wizard Functions
+
+| Function | Purpose |
+|----------|---------|
+| `New-Brush` | Creates frozen `SolidColorBrush` from hex color |
+| `Write-UiLog` | Thread-safe color-coded Message Center entry |
+| `Show-AuthBanner` / `Hide-AuthBanner` | Display/clear auth status banner |
+| `Show-CustomDialog` | Styled modal dialog with MessageBox fallback |
+| `Test-TcpReach` | Async TCP port connectivity test |
+| `ConvertTo-FriendlyOUPath` | DN → "Top / Parent / Child" path |
+| `Update-OUList` | LDAP bind + DataGrid population |
+| `Filter-OUDataGrid` | Client-side live search |
+| `Update-Summary` | Refresh summary pills (green/red backgrounds) |
+| `Test-ADAuthentication` | `PrincipalContext.ValidateCredentials` wrapper |
+| `Write-SCCMVariables` | Writes all 8+ variables to TSEnvironment |
 
 ---
 
 ## 🎨 Design System
 
-### 🖥 Window Layout
+### Color Palette
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│ HEADER: Navy bar │ Logo │ Title + subtitle │ Status dot     │ 52px
-├───────────────────────┬──────────────────────────────────────┤
-│ LEFT COLUMN           │ RIGHT COLUMN                         │
-│ ┌───────────────────┐ │ ┌──────────────────────────────────┐ │
-│ │ Authentication    │ │ │ Deployment Summary               │ │
-│ │ (Gold accent)     │ │ │ (Gold accent)                    │ │
-│ │ - Username        │ │ │ Computer:  [value] 🟢/🔴         │ │
-│ │ - Password        │ │ │ Target OU: [value] 🟢/🔴         │ │
-│ │ - [Sign In]       │ │ │ Domain:    [value] 🟢            │ │
-│ └───────────────────┘ │ │ Software:  [value] 🟢/🔴         │ │
-│ ┌───────────────────┐ │ │ User:      [value] 🟢/🔴         │ │
-│ │ Computer Name     │ │ └──────────────────────────────────┘ │
-│ │ (Navy accent)     │ │ ┌──────────────────────────────────┐ │
-│ │ - [TextBox]       │ │ │ Software Installation            │ │
-│ └───────────────────┘ │ │ (Navy accent)                    │ │
-│ ┌───────────────────┐ │ │ - [✓] App1   [ ] App2           │ │
-│ │ Target OU         │ │ └──────────────────────────────────┘ │
-│ │ (Gold accent)     │ │ ┌──────────────────────────────────┐ │
-│ │ - 🔍 [Search____] │ │ │ Message Center                   │ │
-│ │ - DataGrid (3 col)│ │ │ (Navy accent, dark bg)           │ │
-│ │   (horiz scroll)  │ │ │ [INFO] Ready. Domain: momar... │ │
-│ │ - Selected OU     │ │ └──────────────────────────────────┘ │
-│ └───────────────────┘ │                                      │
-├───────────────────────┴──────────────────────────────────────┤
-│ FOOTER: [Refresh] │ v1.0 | Company | [Cancel] [Deploy]     │ 36px
-└──────────────────────────────────────────────────────────────┘
-```
+| Role | Hex | Usage |
+|------|-----|-------|
+| Navy | `#031926` | Header, Computer/Software/Message Center accents |
+| Gold | `#C9A23D` | Logo badge, Auth/OU/Summary accents |
+| Green | `#28A745` | Success states, Deploy button |
+| Red | `#DC3545` | Error states |
+| Orange | `#F59E0B` | Warning states |
+| SoftBlue | `#EEF2FF` | Software panel, selected OU |
+| PageBg | `#F6F8FB` | Window background |
+| Border | `#E4E9F0` | Card borders |
 
-🟢 = green background when filled    🔴 = red background when empty
+### Component Specs
 
-### 📐 Component Specifications
-
-| Element | Spec |
-|---------|------|
-| **Cards** | White background, #E4E9F0 border, 5px radius, CardShadow, Base font 12px |
-| **Accent Bars** | 5×20px color-coded vertical bars (Gold = Auth/OU/Summary, Navy = Computer/Software/Message Center) |
-| **Buttons** | BtnBase 28px height, SemiBold, 12px font → BtnPrimary/Blue/Green/Red variants |
-| **DataGrid** | 140px height, horizontal scrollbar Auto, fixed column widths (130+170+260) |
-| **Message Center** | #1F2D3A background, Consolas 11px, [LEVEL] prefix, auto-scroll |
-| **Summary** | Individual value borders: GreenBg (#ECFDF3) when filled, RedBg (#FEF2F2) when empty |
-| **Dialogs** | try/catch on XamlReader.Load, MessageBox.Show() fallback for WinPE safety |
+- Cards: 5px border radius, white background, `#E4E9F0` border
+- Buttons: 28px height, SemiBold, 12px font
+- DataGrid: 140px height, horizontal scrollbar auto
+- Message Center: dark background, Consolas 11px, `[LEVEL]` prefix
 
 ---
 
-## 🎨 Color Palette
+## 🐛 Error Handling Strategy
 
-| Role | Hex Code | Usage |
-|------|----------|-------|
-| **Navy** | `#031926` | Header background, Computer/Software/Message Center accent bars |
-| **Gold** | `#C9A23D` | Logo badge, Auth/OU/Summary accent bars |
-| **Green** | `#28A745` | Success states, Deploy button, green summary backgrounds |
-| **Red** | `#DC3545` | Error banners, error dialogs, red summary backgrounds |
-| **Orange** | `#F59E0B` | Warning states, initial status indicator, Cancel/Warning dialogs |
-| **SoftBlue** | `#EEF2FF` | Software panel, selected OU indicator, summary pills |
-| **AccentBlue** | `#1D4ED8` | Software checkbox text, info dialogs, accent text |
-| **GreenBg** | `#ECFDF3` | Success green background |
-| **RedBg** | `#FEF2F2` | Error red background |
-| **PageBg** | `#F6F8FB` | Window background |
-| **TextDark** | `#1F2D3A` | Primary text, headings |
-| **TextMuted** | `#7C8BA1` | Subtitles, hints, muted text |
-| **Border** | `#E4E9F0` | Card borders, input borders |
-
----
-
-## 🐛 Error Handling
-
-| Scenario | Detection | Response | User Impact |
-|----------|-----------|----------|-------------|
-| Empty username/password | `Test-ADAuthentication` | Red auth banner | Blocked — can retry |
-| Wrong credentials | `ValidateCredentials` returns false | Red auth banner | Blocked — can retry (to a limit) |
-| DC unreachable | Exception | Red auth banner: "Cannot reach domain" | Blocked |
-| Auth lockout | `AuthAttempts ≥ 5` | Red auth banner + Sign In disabled | Blocked — must restart |
-| Anonymous LDAP fail (WinPE) | `Update-OUList` catch + `!$IsLoggedIn` | Orange: "Sign in to load OUs" | Non-fatal — sign in to proceed |
-| Authenticated LDAP fail | `Update-OUList` catch + `$IsLoggedIn` | Red: "Cannot load OUs" + error log | UI degraded |
-| No OU selected | Deploy click: `!$sel.DN` | Warning dialog (MessageBox fallback) | Blocked |
-| Invalid computer name | Regex: `[\/:*?"<>|]` | Warning dialog | Blocked |
-| Name > 15 chars | Length check | Warning dialog | Blocked |
-| Not signed in | Deploy click: `!$IsLoggedIn` | Warning dialog | Blocked |
-| TSEnvironment unavailable | COM object creation fails | Red dialog: "Not inside Task Sequence" | Non-fatal |
-| XamlReader.Load fails (WinPE) | try/catch around all dialog Load() | MessageBox.Show() fallback | Degraded — still functional |
-| Wizard file not found | `Start-DeploymentWizard.ps1`: `Test-Path` | Log: "[ERROR] file not found" | Fatal — exit 1 |
-| Invalid parameters | `Start-DeploymentWizard.ps1`: `IsNullOrWhiteSpace` | Log: "[ERROR] required param" | Fatal — exit 1 |
+| Scenario | Detection | Response |
+|----------|-----------|----------|
+| Empty credentials | `Test-ADAuthentication` | Red auth banner |
+| Wrong credentials | `ValidateCredentials` returns false | Red auth banner |
+| DC unreachable | Exception | Red banner: "Cannot reach domain" |
+| 5 failed attempts | `AuthAttempts ≥ 5` | Sign In permanently disabled |
+| Anonymous LDAP fails (WinPE) | `Update-OUList` exception | Orange: "Sign in to load OUs" |
+| XAML rendering fails (WinPE) | try/catch on dialogs | MessageBox fallback |
+| TSEnvironment unavailable | COM creation fails | Warning: "Not inside Task Sequence" |
+| Wizard file missing | `Test-Path` check | Exit 1 with error log |
+| Invalid parameters | `IsNullOrWhiteSpace` check | Exit 1 with error log |
 
 ---
 
 ## 💻 WinPE Requirements
 
-### 🔧 Prerequisites
+The Deployment Wizard requires these Boot Image Optional Components:
 
-```
-WinPE-PowerShell   ~45 MB   — PowerShell execution
-WinPE-NetFX        ~195 MB  — WPF, AD auth, LDAP protocols
-System.DirectoryServices.Protocols — loaded via Add-Type at script init
-─────────────────────────
-Total              ~240 MB
-```
+| Component | Size | Why Needed |
+|-----------|------|------------|
+| WinPE-NetFx | ~195 MB | WPF, AD auth, LDAP protocols |
+| WinPE-PowerShell | ~45 MB | PowerShell script execution |
 
-> 💡 WinPE-WMI is no longer required (device info + connectivity tests removed).
+**Without these components, the wizard cannot render or authenticate in WinPE.**
 
-### 📦 Windows PE Optional Components
+### How to Add
 
-These components must be added to the Boot Image in SCCM:
-
-| Component | Size | Purpose |
-|-----------|------|---------|
-| **Microsoft .NET (WinPE-NetFx)** | ~195 MB | Provides .NET Framework support in WinPE — required for WPF UI, AD authentication, LDAP protocols, and the `System.DirectoryServices.Protocols` assembly |
-| **Windows PowerShell (WinPE-PowerShell)** | ~45 MB | Adds PowerShell execution capability — required to run `Start-DeploymentWizard.ps1` and all other deployment scripts |
-
-### Why These Components Are Required
-
-Without these components, the Deployment Wizard and other scripts **cannot run** in WinPE:
-
-```
-Boot Image (WinPE)
-├── Without WinPE-NetFx
-│   ├── ❌ WPF wizard cannot render (no PresentationFramework)
-│   ├── ❌ AD authentication fails (no PrincipalContext)
-│   ├── ❌ LDAP browsing fails (no LdapConnection)
-│   └── ❌ Script crashes on Add-Type
-│
-└── With WinPE-NetFx + WinPE-PowerShell
-    ├── ✅ WPF wizard renders correctly
-    ├── ✅ AD authentication works
-    ├── ✅ LDAP OU browsing works (pure .NET)
-    ├── ✅ All scripts execute via PowerShell
-    └── ✅ Task Sequence variables written successfully
-```
-
-### How to Add Optional Components
-
-1. Open **SCCM Console** → **Software Library** → **Boot Images**
-2. Right-click your boot image → **Properties**
-3. Go to **Optional Components** tab
-4. Click **Add** → select:
-   - **Microsoft .NET (WinPE-NetFx)**
-   - **Windows PowerShell (WinPE-PowerShell)**
-5. Click **OK** → **Apply**
-6. **Update Distribution Points** — the boot image must be redistributed to all PXE DPs
-
-> ⚠️ After adding components, the boot image size increases by ~240 MB. This is normal and expected.
-
-### ⚙️ Configuration Notes
-
-- Add components via SCCM Console → Software Library → Boot Images
-- After adding, update Distribution Points
-- Anonymous LDAP will fail in WinPE (expected) — user must sign in to load OUs
-- Sign-in credentials are reused for authenticated LDAP bind
-- Dialog fallback to MessageBox ensures functionality even if XAML rendering fails
+1. **SCCM Console → Software Library → Boot Images**
+2. Right-click boot image → **Properties**
+3. **Optional Components** tab → **Add**
+4. Select both components → OK
+5. **Update Distribution Points**
 
 ---
 
-## ⚡ Performance Considerations
+## 🔐 Post-OSD Scheduler Internals
 
-| Operation | Estimated Time | Note |
-|-----------|---------------|------|
-| WPF window load | < 100 ms | XAML parsing (one-time) |
-| AD authentication | 1-5 seconds | DC load + network |
-| LDAP OU query (authenticated) | 2-10 seconds | Direct TCP to DC, paging removed for reliability |
-| TS variable write | < 50 ms | Local COM call |
-| Client-side OU filter | < 10 ms | Where-Object on cached data |
+The scheduler registers two Windows Task Scheduler tasks:
 
-### 🚀 Optimizations Applied
+### PostOSD-Enrollment (Retry)
 
-- **Frozen brushes**: All SolidColorBrush instances frozen for thread safety
-- **Async TCP test**: BeginConnect/EndConnect with timeout
-- **Client-side OU filtering**: Where-Object on cached `$script:OUData` array
-- **Closing guard**: `$script:Closing` flag prevents stale UI dispatches
-- **Direct LDAP**: No ADSI COM overhead — pure .NET TCP socket
-- **Topmost window**: Always visible above other windows during deployment
+| Property | Value |
+|----------|-------|
+| Principal | SYSTEM, RunLevel Highest |
+| Trigger | AtLogOn + Repetition (5 min × 30 min) |
+| Action | `powershell.exe` → run accelerator + handle 3010 |
+| ExecutionTimeLimit | 20 minutes |
+| MultipleInstances | IgnoreNew |
+
+### PostOSD-Cleanup (Self-Destruct)
+
+| Property | Value |
+|----------|-------|
+| Principal | SYSTEM, RunLevel Highest |
+| Trigger | Once, 35 minutes after registration |
+| Action | Unregister both tasks + delete copied scripts |
+
+### Reboot Guard
+
+The accelerator can exit `3010` (reboot needed for IPv6). The wrapper checks:
+
+```powershell
+if ($LASTEXITCODE -eq 3010 -and -not (Test-Path 'RebootDone.flag')) {
+    Set-Content RebootDone.flag -Value (Get-Date)
+    shutdown /r /t 60
+}
+```
+
+This ensures **exactly one reboot** per deployment — no infinite loops.
+
+---
+
+## 🛡 Design Principles
+
+1. **Self-contained** — No external binaries, modules, or XML configs required
+2. **PowerShell 5.1 only** — Compatible with SCCM TS environment
+3. **WinPE-safe** — Pure .NET, no COM dependencies, MessageBox fallbacks
+4. **Process isolation** — Wizard runs in child process; UI crash can't kill TS
+5. **Idempotent** — Safe to run multiple times
+6. **Self-cleaning** — Post-OSD scheduler removes itself and all artifacts
+7. **Parameter-driven** — Every org-specific value is a parameter
+8. **Least privilege** — RBAC role grants only the permissions needed
+9. **Dependency-ordered** — Post-OSD sections run in strict prerequisite order
+10. **Observable** — Tab-separated logs, color-coded UI, full TS variable readback
 
 ---
 
 ## 📜 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](../LICENSE).
 
 ---
 
-## 👤 Author
+## � Author
 
 **Mohammad Abdulkader Omar**
-Website: https://momar.tech
-LinkedIn: https://www.linkedin.com/in/mabdulkadr/
-
----
-
-v1.0 | August 2026
-Momar Tech — IT Operations
+Website: [momar.tech](https://momar.tech) · LinkedIn: [linkedin.com/in/mabdulkadr](https://www.linkedin.com/in/mabdulkadr/)

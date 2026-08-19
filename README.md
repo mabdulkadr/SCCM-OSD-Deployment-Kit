@@ -11,276 +11,234 @@
 
 ---
 
-## 📖 Overview
+## 📖 What Is This?
 
-**SCCM OSD Deployment Kit** transforms SCCM's traditional **zero-touch** OSD into a **user-driven** deployment experience. Built for IT support teams to simplify and accelerate Windows 11 installation across the organization — with interactive wizards that collect device details before deployment, eliminating manual post-install configuration.
+A self-contained PowerShell toolkit for SCCM/MECM that adds interactive WPF wizards and full lifecycle automation to your Windows 11 deployment process. No external binaries, no XML configuration files — just copy the folder and go.
 
-### Why This Toolkit?
+It replaces the rigid zero-touch deployment model with **user-driven, technician-friendly workflows** that cover every support scenario.
 
-This toolkit is a **lightweight, self-contained alternative** to popular SCCM OSD front-end tools like [UI++](https://uiplusplus.tplant.com.au/) and [TsGui](https://github.com/MikePohatu/TsGui). While these tools are powerful and feature-rich, this kit offers a simpler approach:
+### Why Use This Toolkit?
 
-| Feature | SCCM OSD Deployment Kit | UI++ | TsGui |
-|---------|------------------------|------|-------|
-| **Installation** | Copy folder — no dependencies | Compiled EXE + XML config | Module + XML config |
-| **Configuration** | CLI parameters — no XML editing | XML-based | XML-based |
-| **Architecture** | Single .ps1 file per component | External binary | External module |
-| **WinPE Support** | Native `.NET LdapConnection` (no ADSI) | Requires components | Requires components |
-| **Pre-Staging** | Built-in (AdminService REST API) | Not included | Not included |
-| **Post-OSD** | Built-in (Entra ID, MDM, Co-Management) | Not included | Not included |
-| **Email Reporting** | Built-in (Graph API) | Not included | Not included |
-| **RBAC Role** | Included (least-privilege) | Manual | Manual |
-
-> **Best for:** Teams who want a simple, zero-dependency solution that covers the full deployment lifecycle — from pre-staging to post-deployment provisioning — without external binaries, XML configuration, or complex setup.
-
-The toolkit covers **three deployment scenarios** that address every support situation:
-
-| Scenario | Situation | How It Works |
-|----------|-----------|-------------|
-| **On-Site Installation** | Empty device (no OS), technician physically present | Technician boots from media → interactive wizard appears → enters computer name, selects OU, picks software → system completes installation, drivers, and domain join automatically |
-| **Remote Deployment** | Technician at desk, employee at a remote location | Technician runs pre-staging tool from office → registers MAC + OU + software in SCCM via AdminService REST API → instructs employee to boot from network → full deployment happens remotely |
-| **In-Place Upgrade** | Existing OS needs upgrade to 25H2, preserving files and apps | System auto-detects current UI language (Arabic/English) → pulls and runs the matching upgrade files silently — zero manual intervention |
-
-### The Problem This Solves
-
-Traditional SCCM zero-touch deployments are rigid — the same image goes to every device with no room for technician input. This toolkit adds **interactive WPF wizards** at critical points in the task sequence, letting support staff personalize each deployment: computer name, organizational unit, domain join credentials, and application selection — all before a single file is copied.
-
-### Architecture
-
-Each module is self-contained: its script, documentation, and supporting files live together in a single folder. No cross-folder dependencies, no scattered files.
-
-```
-                   SCCM OSD Deployment Kit
-                          │
-     ┌────────────────────┼────────────────────┐
-     │                    │                    │
-     ▼                    ▼                    ▼
-┌─────────┐     ┌──────────────┐      ┌──────────────┐
-│  PHASE 0│     │   PHASE 1    │      │   PHASE 2    │
-│Pre-Stage│───▶│  Deployment  │─────▶│ Post-Deploy  │
-│ (remote)│     │ (on-site OSD)│      │ (provision)  │
-└─────────┘     └──────────────┘      └──────────────┘
-     │                    │                    │
-SCCM-OSD-           DeploymentWizard/   Post-OSD-
-PreStaging/         ├── .ps1 + .ps1     Enrollment/
-                    └── .md  + .md      ├── .ps1 + .ps1
-                                        └── .md  + .md
-```
+| Feature | This Toolkit | UI++ | TsGui |
+|---------|--------------|------|-------|
+| **Setup** | Copy folder | Compiled EXE + XML | Module + XML |
+| **Configuration** | CLI parameters | XML-based | XML-based |
+| **WinPE Support** | Native .NET LDAP (no ADSI) | Requires components | Requires components |
+| **Pre-Staging** | ✅ Built-in (REST API) | � Not included | ❌ Not included |
+| **Post-OSD Enrollment** | ✅ Built-in (Entra, MDM, Co-mgmt) | ❌ Not included | ❌ Not included |
+| **RBAC Role Included** | ✅ Yes | ❌ Manual | ❌ Manual |
 
 ---
 
-## 📸 Screenshots
+## � Deployment Scenarios
 
-### Boot Image Configuration
+The toolkit supports three scenarios covering every support situation:
 
-The Boot Image must include WinPE-NetFx and WinPE-PowerShell optional components:
-
-![Boot Image - Optional Components](images/BootImage.png)
-
-### Application Packages
-
-The SCCM-OSD-Deployment-Kit package has been uploaded and is ready for distribution:
-
-![Application Packages](<images/App Packages.png>)
-
-> ✅ Package ID: `QU100100` — Distribute to all Distribution Points before using the Task Sequence.
-
-### Deployment Wizard
-
-The interactive WPF wizard that appears during OSD to collect deployment parameters:
-
-![Deployment Wizard](images/DeploymentWizard.png)
-
-### Pre-Staging Tool
-
-The WPF GUI for remote device registration via AdminService REST API:
-
-![Pre-Staging Tool](images/SCCM-OSD-PreStaging.png)
-
-### Task Sequences Overview
-
-The three Task Sequences in SCCM Console:
-
-![Task Sequences](images/Task\ Sequences.png)
-
-### On-Site Deployment (9 Steps)
-
-| Step | Screenshot |
-|------|------------|
-| Step 1 | ![Step 1](<images/Deploy Win11 25H2 - [On-site] -01.png>) |
-| Step 2 | ![Step 2](<images/Deploy Win11 25H2 - [On-site] -02.png>) |
-| Step 3 | ![Step 3](<images/Deploy Win11 25H2 - [On-site] -03.png>) |
-| Step 4 | ![Step 4](<images/Deploy Win11 25H2 - [On-site] -04.png>) |
-| Step 5 | ![Step 5](<images/Deploy Win11 25H2 - [On-site] -05.png>) |
-| Step 6 | ![Step 6](<images/Deploy Win11 25H2 - [On-site] -06.png>) |
-| Step 7 | ![Step 7](<images/Deploy Win11 25H2 - [On-site] -07.png>) |
-| Step 8 | ![Step 8](<images/Deploy Win11 25H2 - [On-site] -08.png>) |
-| Step 9 | ![Step 9](<images/Deploy Win11 25H2 - [On-site] -09.png>) |
-
-### Remote Deployment
-
-![Remote Deployment](<images/Deploy Win11 25H2 - [Remotely] -01.png>)
-
-### In-Place Upgrade
-
-| Step | Screenshot |
-|------|------------|
-| Step 1 | ![Step 1](<images/Upgrade to Win11 25H2 -01.png>) |
-| Step 2 | ![Step 2](<images/Upgrade to Win11 25H2 -02.png>) |
+| Scenario | When to Use | What Happens |
+|----------|-------------|--------------|
+| 🖥 **On-Site Installation** | Empty device, technician at the machine | Tech boots device → wizard collects info → auto installs |
+| 📡 **Remote Deployment** | Tech at office, employee at remote location | Tech pre-stages device → employee boots from network → full auto deploy |
+| ⬆️ **In-Place Upgrade** | Existing OS needs upgrade to 25H2 | Auto-detects language → preserves files/apps → silent upgrade |
 
 ---
 
-## ⚙️ Configuration Required
+## 📦 What's Inside
 
-> **Before using any script**, replace the placeholders below with your organization's actual values.
-
-| Placeholder | Where | What to put |
-|---|---|---|
-| `<YOUR_TENANT_ID>` | Report scripts | Azure AD tenant GUID |
-| `<YOUR_CLIENT_ID>` | Report scripts | Azure AD app client GUID |
-| `<YOUR_CLIENT_SECRET>` | Report scripts | Azure AD app secret |
-| `<YOUR_SERVICE_EMAIL>` | Report scripts | Sender mailbox (Graph API) |
-| `<YOUR_EMAIL>` | Report scripts | Primary recipient email |
-| `<ADMIN_EMAIL>` | Report examples | Admin mailbox |
-| `<HELPDESK_EMAIL>` | Report examples | Helpdesk mailbox |
-| `-DefaultLanguage` | All scripts | OS language (`en-US` / `ar-SA`) |
-| `<YOUR_DOMAIN>` | Docs / email | Your domain (e.g. `contoso.com`) |
-| `<YOUR_TENANT>` | Docs | Your Microsoft 365 tenant name |
-| `Momar Tech` | All scripts | Your organization name |
-| `MT` | All scripts | Your 2-3 char org code |
-| `momar.local` | All scripts | Your AD domain FQDN |
-| `DC=Momar,DC=local` | All scripts | Your LDAP search base DN |
-| `dc01.momar.local` | All scripts | Your domain controller FQDN |
-| `sccm.momar.local` | DeploymentWizard | Your SCCM MP FQDN |
-| `SCCM.Momar.local` | PreStaging | Your SCCM AdminService FQDN |
-| `MT1` | All scripts | Your SCCM site code |
-| `10.0.0.11` - `14` | Remove-StaleADComputer | Your DC IP addresses |
-
----
-
-## 🗂 Folder Structure
+The toolkit is organized into self-contained modules — each with its own script and documentation:
 
 ```
 SCCM-OSD-Deployment-Kit/
+├── README.md                              ← You are here
+├── autounattend.xml                       ← Windows OOBE bypass
+├── autounattend.md                        ← Documentation
+├── Remove-StaleADComputer.ps1             ← Cleans stale AD objects in WinPE
 │
-├── README.md                               # 📖 This file
-├── autounattend.xml                        # 📄 Win11 OOBE bypass answer file
-├── autounattend.md                         # 📖 Unattend documentation
-├── technical-architecture.md               # 📐 Full architecture reference
+├── DeploymentWizard/                      ← Phase 1: Interactive OSD wizard
+│   ├── Start-DeploymentWizard.ps1         ← TS entry point (wrapper)
+│   ├── DeploymentWizard.ps1               ← WPF wizard application
+│   └── *.md
 │
-├── images/                                 # 📸 Screenshots for documentation
-│   ├── BootImage.png                       # Boot Image Optional Components
-│   ├── App Packages.png                    # Application Packages
-│   ├── DeploymentWizard.png                # Deployment Wizard UI
-│   ├── SCCM-OSD-PreStaging.png            # Pre-Staging Tool UI
-│   ├── Task Sequences.png                  # Task Sequences overview
-│   ├── Deploy Win11 25H2 - [On-site] *.png # On-site deployment (9 steps)
-│   ├── Deploy Win11 25H2 - [Remotely] *.png # Remote deployment
-│   └── Upgrade to Win11 25H2 *.png         # In-place upgrade
+├── Post-OSD-Enrollment/                   ← Phase 2: Silent post-deployment
+│   ├── Schedule-PostOSD-Enrollment.ps1    ← Retry + cleanup scheduler
+│   ├── Post-OSD-Enrollment-Accelerator.ps1← 6-section provisioning engine
+│   └── *.md
 │
-├── DeploymentWizard/                       # 🖥 Phase 1 — Interactive OSD Wizard
-│   ├── Start-DeploymentWizard.ps1          # 🚀 SCCM TS wrapper (validates, launches, verifies)
-│   ├── Start-DeploymentWizard.md           # 📖 Wrapper architecture doc
-│   ├── DeploymentWizard.ps1                # 🖥 WPF wizard (~1550 lines, 12 functions)
-│   └── DeploymentWizard.md                 # 📖 Wizard architecture + deep dive
+├── SCCM-OSD-PreStaging/                   ← Phase 0: Remote device registration
+│   ├── SCCM-OSD-PreStaging.ps1            ← WPF GUI for helpdesk
+│   ├── Helpdesk OSD Pre-Staging Operator.xml ← RBAC role
+│   └── *.md
 │
-├── Post-OSD-Enrollment/                    # 🔁 Phase 2 — Silent Post-Deployment
-│   ├── Schedule-PostOSD-Enrollment.ps1     # ⏰ Self-cleaning retry scheduler
-│   ├── Schedule-PostOSD-Enrollment.md      # 📖 Scheduler lifecycle + timeline doc
-│   ├── Post-OSD-Enrollment-Accelerator.ps1 # 🔁 6-section provisioning engine
-│   └── Post-OSD-Enrollment-Accelerator.md  # 📖 Accelerator 6-section deep dive
-│
-├── SCCM-OSD-PreStaging/                    # ⚙️ Phase 0 — Off-Site Pre-Staging
-│   ├── SCCM-OSD-PreStaging.ps1             # 🖥 WPF GUI (AdminService REST API)
-│   ├── SCCM-OSD-PreStaging.md              # 📖 REST API + SSL architecture doc
-│   ├── README.md                           # 📖 Quick-reference README
-│   └── Helpdesk OSD Pre-Staging Operator.xml # 🔐 SCCM RBAC role (Create + OSD Variables)
-│
-├── Report/                                 # 📊 Deployment reporting & email
-│   ├── Get-OSDDeploymentReport.ps1         # 🚀 OSD deployment status report
-│   ├── Send-QUExchangeMail.psm1            # 📧 Graph API email module
-│   └── Send-QUExchangeMail.md              # 📖 Email module documentation
-│
-└── Remove-StaleADComputer.ps1             # 🧹 WinPE script — delete stale AD computer objects
+└── Report/                                ← Deployment reporting
+    ├── Get-OSDDeploymentReport.ps1        ← HTML status reports
+    ├── Send-QUExchangeMail.psm1           ← Graph API email module
+    └── *.md
 ```
 
 ---
 
-## ✨ Core Features
+## ⚡ Quick Start
 
-### 🔹 Phase 1 — Deployment Wizard (`DeploymentWizard/`)
+### 1. Upload to SCCM
 
-The interactive **WPF wizard** appears during the OSD task sequence to collect deployment parameters. Each `.ps1` file has a matching `.md` documentation file in the same folder.
+Create a package containing the entire `SCCM-OSD-Deployment-Kit` folder, then distribute it to your Distribution Points.
 
-**`Start-DeploymentWizard.ps1` — TS Wrapper:**
-- Validates required parameters (`-DomainName`, `-SearchBase`) — fail-fast exit on empty
-- Resolves `DeploymentWizard.ps1` path with 3 fallbacks for different execution contexts
-- Launches the wizard in a child `powershell.exe` process — UI crash can't kill the TS
-- Forwards each `-Software` entry individually (arrays don't serialize well across process boundaries)
-- Reads back all TS variables, masks `OSDJoinPassword`, logs everything to `smsts.log`
+**Package properties** (example):
 
-**`DeploymentWizard.ps1` — WPF Application:**
-- AD authentication via `PrincipalContext.ValidateCredentials` with 5-attempt lockout
-- LDAP OU browser via pure .NET `LdapConnection` — no ADSI COM, works in WinPE
-- Live search DataGrid, breadcrumb paths, selected-OU indicator with green/red backgrounds
-- Dynamic software checkboxes from `-Software` parameter → `App_*` TS variables
-- Writes 8+ variables via COM `Microsoft.SMS.TSEnvironment`
-- WinPE-safe: MessageBox fallback when XAML rendering fails
-- 12 functions, 6 event handlers, single-file XAML+code embedded architecture
+| Property | Value |
+|----------|-------|
+| Package Name | `SCCM-OSD-Deployment-Kit` |
+| Package ID | `QU100100` |
+| Version | `1.0` |
 
-> 📖 Docs: [`DeploymentWizard/DeploymentWizard.md`](DeploymentWizard/DeploymentWizard.md) · [`DeploymentWizard/Start-DeploymentWizard.md`](DeploymentWizard/Start-DeploymentWizard.md)
+### 2. Configure Boot Image
 
-### 🔹 Phase 2 — Post-OSD Enrollment (`Post-OSD-Enrollment/`)
+In **SCCM Console → Software Library → Boot Images → Properties → Optional Components**, add:
 
-Silent, SYSTEM-context provisioning at task sequence completion — zero user interaction.
+| Component | Size | Why Needed |
+|-----------|------|------------|
+| **WinPE-NetFx** | ~195 MB | WPF UI, AD authentication, LDAP |
+| **WinPE-PowerShell** | ~45 MB | Script execution |
 
-**`Schedule-PostOSD-Enrollment.ps1` — Retry + Cleanup Scheduler:**
-- Copies the accelerator to `C:\Windows\Temp\PostOSD\` (outside ephemeral SCCM package cache)
-- Registers `PostOSD-Enrollment` task: AtLogOn trigger, repeats every 5 min × 30 min
-- One-time reboot guard: `RebootDone.flag` ensures exactly 1 reboot on exit `3010`
-- Registers `PostOSD-Cleanup` task: fires at +35 min, deletes both tasks + script copies + markers
-- Idempotent — skips if already registered; always exits `0` (never blocks TS)
+Then **Update Distribution Points**.
 
-**`Post-OSD-Enrollment-Accelerator.ps1` — 6-Section Provisioning Engine:**
-1. **Time Service** — w32time sync from PDC, set time zone (PCs-only safety skip)
-2. **IPv6 Disable** — adapter binding + registry `0xFF`, reboot flag only on actual change
-3. **SCCM Actions** — 8 standard action GUIDs + `usoclient.exe` refresh
-4. **Entra ID Join** — `dsregcmd /status` → `/join`, covers AAD Connect sync gap
-5. **MDM Enrollment** — tenant discovery, URL config, `AutoEnrollMDM`, `deviceenroller.exe`
-6. **Co-Management** — 3-tier detection (WMI → Registry → MDM policy) + 30s re-check
+### 3. Add to Your Task Sequence
 
-> 📖 Docs: [`Post-OSD-Enrollment/Post-OSD-Enrollment-Accelerator.md`](Post-OSD-Enrollment/Post-OSD-Enrollment-Accelerator.md) · [`Post-OSD-Enrollment/Schedule-PostOSD-Enrollment.md`](Post-OSD-Enrollment/Schedule-PostOSD-Enrollment.md)
+Add these steps in order:
 
-### 🔹 Phase 0 — Pre-Staging Tool (`SCCM-OSD-PreStaging/`)
+| Step | Type | Script |
+|------|------|--------|
+| 1 | Run PowerShell Script | `Start-DeploymentWizard.ps1` |
+| 2 | Run PowerShell Script | `Remove-StaleADComputer.ps1` |
+| 3 | Run PowerShell Script | `Schedule-PostOSD-Enrollment.ps1` |
+| 4 | Run PowerShell Script | `Post-OSD-Enrollment-Accelerator.ps1` |
 
-Remote helpdesk operators register bare-metal devices **before they arrive** — no SCCM console required.
+Fill in the parameters for each step with your organization values (see [Configuration](#-configuration) below).
 
-- WPF GUI connecting to **SCCM AdminService REST API** over HTTPS
-- 3-step API flow: `ImportMachineEntry` → verify `SMS_R_System` → inject `SMS_MachineSettings`
-- **C# compiled SSL bypass** — works in compiled EXEs where PowerShell script-block callbacks fail
-- TLS 1.2 applied at startup + before every API call (double-hardened)
-- AD authentication, LDAP OU browser, dynamic software checkboxes with TS variable tooltips
-- MAC auto-formatting + regex validation, 15-char name limit
-- Full-detail WPF confirmation dialog before sending to SCCM
-- Auto-clear fields after success, retry prompt on failure (2 attempts)
-- **Compiled EXE** available — double-click, no PowerShell console needed
-- **RBAC Role** (`Helpdesk OSD Pre-Staging Operator.xml`) — import into SCCM to grant operators Create + Read + Set OSD Variables permissions (least-privilege, no admin rights needed)
+### 4. Configure
 
-> 📖 Docs: [`SCCM-OSD-PreStaging/SCCM-OSD-PreStaging.md`](SCCM-OSD-PreStaging/SCCM-OSD-PreStaging.md) · [`SCCM-OSD-PreStaging/README.md`](SCCM-OSD-PreStaging/README.md)
+Replace the default placeholders in every script's parameter block with your own values. The two most important are:
 
-### 🔹 Windows Unattend (`autounattend.xml`)
+- `-DomainName` — your AD domain (e.g., `contoso.local`)
+- `-SearchBase` — your LDAP search base (e.g., `OU=Workstations,DC=contoso,DC=local`)
 
-Minimal answer file for zero-touch Windows 11 Setup:
-- **specialize pass** — `BypassNRO = 1`, removes network requirement
-- **oobeSystem pass** — hides EULA, OEM registration, Microsoft account, wireless setup
-- Auto-discovered by Windows Setup at the media root — no command-line parameter needed
+See each module's documentation for the full list.
 
-> 📖 Docs: [`autounattend.md`](autounattend.md)
+---
 
-### 🔹 Technical Architecture (`technical-architecture.md`)
+## 🔄 How It All Works
 
-Full internal reference: data-flow diagrams, state machine, 12-function index, LDAP architecture, color palette, WinPE requirements, error handling matrix, performance benchmarks.
+### Scenario 1: On-Site Installation
 
-> 📖 Docs: [`technical-architecture.md`](technical-architecture.md)
+```
+1. Device boots from PXE/network media
+2. WinPE loads → Deployment Wizard appears
+3. Technician:
+   - Signs in with domain credentials
+   - Enters computer name, selects OU, picks software
+   - Selects language (English or Arabic)
+   - Clicks Deploy
+4. From this point → everything is automatic:
+   - Partition disk → Apply OS → Install drivers
+   - Domain join → SCCM client → Applications
+   - Post-OSD: Time sync → IPv6 → Entra ID → Intune → Co-management
+5. Device ready for the end user
+```
+
+### Scenario 2: Remote Deployment
+
+```
+1. Helpdesk tech runs Pre-Staging Tool from office:
+   - Enters MAC address, computer name, OU, software, language
+   - Clicks Pre-Stage → device registered in SCCM DB
+2. Instructs employee to PXE boot the device
+3. From the employee's perspective:
+   - Selects the deployment option
+   - Everything else is automatic (same as Scenario 1)
+```
+
+### Scenario 3: In-Place Upgrade
+
+```
+1. User opens Software Center on their device
+2. Selects "Upgrade to Win11 25H2" → clicks Install
+3. The Task Sequence:
+   - Auto-detects current UI language
+   - Pulls matching upgrade files
+   - Runs silent upgrade in background
+4. Files, applications, and settings preserved
+```
+
+---
+
+## ⚙️ Configuration
+
+### Required Placeholders
+
+Replace these in every script's parameter block:
+
+| Placeholder | What to Put |
+|-------------|-------------|
+| `<your-domain>.local` | Your AD domain FQDN |
+| `OU=YourOU,DC=your-domain,DC=local` | Your LDAP search base DN |
+| `dc01.your-domain.local` | Your domain controller FQDN |
+| `sccm.your-domain.local` | Your SCCM Management Point FQDN |
+| `SCCM.your-domain.local` | Your SCCM AdminService FQDN |
+| `ABC` (3 chars) | Your SCCM site code |
+| `<YOUR_TENANT_ID>` | Azure AD tenant GUID (for reports) |
+| `<YOUR_CLIENT_ID>` | Azure AD app client ID (for reports) |
+| `<YOUR_CLIENT_SECRET>` | Azure AD app secret (for reports) |
+
+### Where to Configure
+
+**For TS steps:** Right-click the step in SCCM Console → Properties → fill in the **Parameters** field.
+
+**For the Pre-Staging Tool:** Pass values as script parameters or edit the defaults in the script header.
+
+---
+
+## 📋 Components in Detail
+
+### 🖥 Deployment Wizard
+
+Interactive WPF wizard that runs in WinPE during OSD. Collects all the information the task sequence needs (computer name, OU, credentials, software, language) and writes it as Task Sequence variables.
+
+**TS Step:** `Start-DeploymentWizard.ps1` (the wrapper that validates, launches, monitors, and verifies)
+
+> � [Read full documentation →](DeploymentWizard/DeploymentWizard.md)
+
+### 📡 Pre-Staging Tool
+
+WPF GUI for helpdesk operators to register bare-metal devices in SCCM **before they arrive on-site**. Uses the SCCM AdminService REST API over HTTPS — no SCCM console required on the operator's workstation.
+
+> 📖 [Read full documentation →](SCCM-OSD-PreStaging/SCCM-OSD-PreStaging.md)
+
+### ⚙️ Post-OSD Enrollment
+
+Silent SYSTEM-context provisioning that runs at the end of the task sequence. Six dependency-ordered steps:
+
+1. **Time Service** — sync from PDC, configure time zone
+2. **IPv6 Disable** — adapter + registry (single reboot guard)
+3. **SCCM Actions** — trigger 8 standard actions + Windows Update refresh
+4. **Entra ID Join** — Hybrid Azure AD join
+5. **MDM Enrollment** — Intune auto-enrollment
+6. **Co-Management** — verify SCCM + Intune co-management
+
+A built-in scheduler retries every 5 min × 30 min, then self-cleans everything.
+
+> 📖 [Read full documentation →](Post-OSD-Enrollment/Post-OSD-Enrollment-Accelerator.md)
+
+### 📄 autounattend.xml
+
+Minimal Windows Setup answer file that hides OOBE screens and bypasses the Windows 11 network requirement. Linked in the **Apply Operating System Image** TS step.
+
+> 📖 [Read full documentation →](autounattend.md)
+
+### 📊 Reporting
+
+- **`Get-OSDDeploymentReport.ps1`** — Generates HTML executive reports from SCCM WMI
+- **`Send-QUExchangeMail.psm1`** — Sends email via Microsoft Graph API (OAuth 2.0)
+
+> 📖 [Report documentation →](Report/Get-OSDDeploymentReport.md)
 
 ---
 
@@ -288,283 +246,61 @@ Full internal reference: data-flow diagrams, state machine, 12-function index, L
 
 | Requirement | Minimum | Notes |
 |-------------|---------|-------|
-| PowerShell | 5.1+ | Built into Windows 10/11. SCCM TS always runs PS 5.1. |
+| PowerShell | 5.1+ | Built into Windows 10/11 |
 | .NET Framework | 4.6.2+ | WPF, AD auth, LDAP |
 | SCCM/MECM | CB 1902+ | `Microsoft.SMS.TSEnvironment` COM interface |
-| WinPE | 10.0.17763+ | See **Boot Image Setup** below |
-| AD Domain | Line-of-sight to DC | Auth, LDAP, domain join. Ports 389, 88, 445. |
-| SCCM AdminService | HTTPS on SMS Provider | **Only for Pre-Staging Tool** |
-
-### Boot Image Setup (Windows PE Optional Components)
-
-The Boot Image must include these **Optional Components** for the Deployment Wizard to run:
-
-| Component | Size | Purpose |
-|-----------|------|---------|
-| **Microsoft .NET (WinPE-NetFx)** | ~195 MB | WPF UI, AD auth, LDAP protocols |
-| **Windows PowerShell (WinPE-PowerShell)** | ~45 MB | Execute all deployment scripts |
-
-**How to add:**
-1. SCCM Console → Software Library → Boot Images → right-click → Properties
-2. Optional Components tab → Add → select both components
-3. Update Distribution Points after adding
-
----
-
-## 🚀 How to Run
-
-### Scenario 1 — On-Site Installation (New Device)
-
-The technician boots the empty device from installation media. The interactive wizard appears in WinPE to collect deployment details.
-
-| Step | Script | Folder | Account | Purpose |
-|------|--------|--------|---------|---------|
-| 1 | `Start-DeploymentWizard.ps1` | `DeploymentWizard/` | SYSTEM | Launch WPF wizard (30 min timeout) |
-| 2 | Domain join + App installs | — | — | Consumes OSD variables |
-| 3 | `Schedule-PostOSD-Enrollment.ps1` | `Post-OSD-Enrollment/` | SYSTEM | Install retry + cleanup tasks |
-| 4 | `Post-OSD-Enrollment-Accelerator.ps1` | `Post-OSD-Enrollment/` | SYSTEM | Time → IPv6 → SCCM → Entra → MDM → Co-mgmt |
-
-### Scenario 2 — Remote Deployment (Pre-Staging)
-
-The technician registers the device from their office. The employee boots from network at the remote location.
-
-```powershell
-# Technician runs from office:
-.\SCCM-OSD-PreStaging\SCCM-OSD-PreStaging.ps1
-```
-
-### Scenario 3 — In-Place Upgrade
-
-The task sequence auto-detects the current system language and pulls the matching upgrade files. No user interaction needed.
-
-### Test Run (Interactive)
-
-```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force
-.\DeploymentWizard\Start-DeploymentWizard.ps1
-```
-
----
-
-## 📦 SCCM Package Setup
-
-The toolkit has been uploaded as an SCCM **Application Package** for easy distribution and reuse:
-
-| Property | Value |
-|----------|-------|
-| **Package Name** | `SCCM-OSD-Deployment-Kit` |
-| **Package ID** | `QU100100` |
-| **Version** | `1.0` |
-| **Location** | Software Library → Application Management → Packages |
-| **Status** | ✅ Uploaded and ready for distribution |
-
-### Package Contents
-
-The package contains all files used during OSD:
-
-| File | Purpose |
-|------|---------|
-| `Start-DeploymentWizard.ps1` | Launch WPF wizard (TS entry point) |
-| `DeploymentWizard.ps1` | WPF wizard application |
-| `Remove-StaleADComputer.ps1` | Delete stale AD computer objects |
-| `Schedule-PostOSD-Enrollment.ps1` | Register retry + cleanup tasks |
-| `Post-OSD-Enrollment-Accelerator.ps1` | 6-section provisioning engine |
-| `autounattend.xml` | Windows Setup answer file |
-
-### Distribution
-
-1. **Distribute Content** to all Distribution Points
-2. Verify **Content Status** shows **Success** before using the Task Sequence
-3. Reference the package in your Task Sequence using **Package ID: `QU100100`**
-
----
-
-## 🔄 Complete Task Sequence
-
-### Phase 1 — Pre-Deployment
-
-| Step | Script/Action | Purpose |
-|------|---------------|---------|
-| 1 | `Start-DeploymentWizard.ps1` | Launch WPF wizard — collect computer name, OU, software, language, domain credentials |
-| 2 | `Remove-StaleADComputer.ps1` | Delete stale AD computer object with the same name |
-
-**Task Sequence Variables Generated:**
-
-| Variable | Source | Used In |
-|----------|--------|---------|
-| `OSDComputerName` | Wizard input | Windows Settings, Domain Join |
-| `OSDDomainName` | `-DomainName` param | Domain Join |
-| `OSDDomainOUName` | Selected OU DN | Domain Join |
-| `OSDJoinAccount` | Credentials | Domain Join |
-| `OSDJoinPassword` | Credentials (hidden) | Domain Join |
-| `OSDRegisteredOrgName` | `-OrgName` param | Windows Settings |
-| `OSDLanguage` | Language picker | OS Image Selection |
-| `App_*` | Checked checkboxes | Application Installation |
-
-### Phase 2 — Install Operating System
-
-| Step | Action | Condition |
-|------|--------|-----------|
-| 1 | **Restart in Windows PE** | Always |
-| 2 | **Partition Disk 0 - BIOS** | Legacy BIOS |
-| 3 | **Partition Disk 0 - UEFI** | UEFI (creates EFI, MSR, Windows, Recovery) |
-| 4 | **Apply OS English** | `OSDLanguage equals "en-US"` |
-| 5 | **Apply OS Arabic** | `OSDLanguage equals "ar-SA"` |
-| 6 | **Apply autounattend.xml** | From SCCM package (linked in "Apply OS Image" step) |
-| 7 | **Apply Windows Settings** | `OSDComputerName`, `OSDRegisteredOrgName` |
-| 8 | **Apply Network Settings** | `OSDDomainName`, `OSDDomainOUName`, `OSDJoinAccount`, `OSDJoinPassword` |
-| 9 | **Apply Device Drivers** | Chipset, Network, Audio, Storage, Video |
-
-### Phase 3 — Setup Operating System
-
-| Step | Action | Purpose |
-|------|--------|---------|
-| 1 | **Setup Windows and Configuration Manager** | Install SCCM Client |
-| 2 | **Restart Computer** | Apply SCCM Client installation |
-
-### Phase 4 — Install Applications
-
-| Step | Action | Purpose |
-|------|--------|---------|
-| 1 | **Install Cisco Secure Client** | VPN + network services |
-| 2 | **Schedule Post OSD Enrollment** | Register retry + cleanup tasks |
-| 3 | **Final Restart** | Apply all policies + drivers + apps |
-
----
-
-## 🌐 Language Selection Mechanism
-
-The Task Sequence supports **two OS images** (English and Arabic) with automatic selection based on user input:
-
-```
-Start-DeploymentWizard.ps1
-          ↓
-User Selects Language (English / Arabic)
-          ↓
-OSDLanguage Variable Created
-          ↓
- ┌─────────────────────┬─────────────────────┐
- │                     │
- │ OSDLanguage=en-US   │ OSDLanguage=ar-SA
- │                     │
- ▼                     ▼
-Apply OS English   Apply OS Arabic
- │                     │
- └──────────┬──────────┘
-            ↓
- Apply Windows Settings
-            ↓
- Apply Network Settings
-            ↓
- Apply Device Drivers
-            ↓
- Setup Windows & ConfigMgr
-```
-
-### Why This Design?
-
-- **Single Task Sequence** — no need to create separate TS for each language
-- **User-driven** — technician selects language during wizard
-- **Automatic** — correct image applied based on `OSDLanguage` value
-- **Consistent** — same installation steps regardless of language
-
----
-
-## 🔄 Full Deployment Lifecycle
-
-```
-SCENARIO 1 — ON-SITE INSTALLATION (empty device, technician present)
-  └─ Device boots from installation media → WinPE loads → Wizard appears
-  └─ Tech authenticates → enters name → selects OU → picks software → selects language
-  └─ Wizard writes OSDComputerName, OSDDomainOUName, OSDLanguage, App_* to TSEnvironment
-  └─ Remove-StaleADComputer cleans up any existing AD object
-  └─ WinPE restart → Partition disk → Apply OS image (English/Arabic based on OSDLanguage)
-  └─ Apply autounattend.xml → Windows Settings → Network Settings → Drivers
-  └─ Setup Windows + SCCM Client → Restart → Install apps → Post-OSD enrollment
-  └─ Ready: Domain-joined, Entra-joined, Intune-enrolled, Co-managed
-
-SCENARIO 2 — REMOTE DEPLOYMENT (technician off-site)
-  └─ Tech runs Pre-Staging Tool from office → registers MAC + Name + OU + Software + Language
-  └─ AdminService REST API → device in SCCM DB with all OSD variables
-  └─ Employee boots device from network → SCCM recognizes MAC → deploys automatically
-  └─ All OSD variables applied from pre-staged record
-
-SCENARIO 3 — IN-PLACE UPGRADE (existing OS → Windows 11 25H2)
-  └─ Task sequence detects current UI language (Arabic / English)
-  └─ Pulls and runs matching upgrade files automatically
-  └─ Files, apps, and settings preserved — zero manual intervention
-
-POST-DEPLOYMENT (all scenarios, silent SYSTEM context)
-  └─ Scheduler registers retry + cleanup tasks
-  └─ Accelerator runs: Time sync → IPv6 → SCCM → Entra join → MDM → Co-mgmt
-  └─ Machine reboots into Windows → AutoLogon → retries every 5 min × 30 min
-  └─ At +35 min: cleanup task deletes everything
-
-✅ READY — Domain-joined, Entra-joined, Intune-enrolled, Co-managed
-```
-
----
-
-## 🎨 Customization
-
-Every visible string is a **parameter**. Pass your org values at runtime — no file editing needed:
-
-```powershell
-.\DeploymentWizard\Start-DeploymentWizard.ps1 `
-    -CompanyName "Contoso Ltd" -CompanyShort "CT" -Department "Infrastructure" `
-    -DomainName "contoso.com" -SearchBase "OU=Workstations,DC=contoso,DC=com" `
-    -DomainController "dc01.contoso.com" -SccmServer "sccm.contoso.com" `
-    -OrgName "Contoso Ltd" -DefaultLanguage "en-US" `
-    -Software @("Chrome|App_Chrome|true","Firefox|App_Firefox|true","Office365|App_Office|true")
-```
-
----
-
-## 📊 Operational Safeguards
-
-| Category | Safeguard | Component |
-|----------|-----------|-----------|
-| Input Validation | Required params checked → exit 1 | Wrapper |
-| Auth Security | 5-attempt lockout, password in-memory only, hidden TS variable | Wizard + PreStaging |
-| WinPE Resilience | MessageBox fallback on XAML failure, try/catch on dialogs | Wizard |
-| Process Isolation | Wizard in child `powershell.exe` — crash can't kill TS | Wrapper |
-| Retry Engine | Post-logon task retries every 5 min × 30 min | Scheduler |
-| Reboot Safety | `RebootDone.flag` — exactly 1 reboot, no loops | Scheduler |
-| Self-Cleanup | Tasks, copies, flags deleted at +35 min | Scheduler |
-| API Resilience | Retry 2× on failure, TLS 1.2 applied twice | PreStaging |
-| Structured Logging | Tab-separated, timestamped, password masked | All scripts |
+| WinPE | 10.0.17763+ | With WinPE-NetFx + WinPE-PowerShell |
+| AD Domain | Connectivity to DC | Ports 389, 88, 445 |
+| SCCM AdminService | HTTPS | Required only for Pre-Staging Tool |
 
 ---
 
 ## 🐛 Troubleshooting
 
-| Symptom | Likely Cause | Fix |
+| Problem | Likely Cause | Fix |
 |---------|--------------|-----|
-| Wizard doesn't launch | Scripts not co-located in `DeploymentWizard/` | Both `.ps1` files must be in same folder |
-| Wizard blank in WinPE | WinPE-NetFX missing | Add via Boot Image → Optional Components |
-| OU grid empty in WinPE | Anonymous LDAP fails | Sign in — credentials reused for bind |
-| "Cannot reach domain" | DC offline | `Test-NetConnection $DC -Port 389` |
-| Sign-in disabled | 5 failed attempts | Restart wizard |
-| Enrollment never completes | AAD Connect sync gap | Retries cover the 30-min window |
-| Repeated reboots | Flag guard missing | Check `C:\Windows\Temp\PostOSD\RebootDone.flag` |
-| Co-management "Not Detected" | Cloud Attach not configured | Set up in SCCM console |
-| Pre-Staging: 403 | Missing RBAC | Import `Helpdesk OSD Pre-Staging Operator.xml` |
+| Wizard doesn't appear | Scripts in different folders | Both `.ps1` files must be in same `DeploymentWizard/` folder |
+| Wizard blank in WinPE | Missing WinPE-NetFX | Add WinPE-NetFX to boot image, update DPs |
+| OU list empty | Anonymous LDAP failed (WinPE) | Sign in — credentials are reused for LDAP bind |
+| "Cannot reach domain" | DC unreachable | `Test-NetConnection dc01.your-domain.local -Port 389` |
+| Sign-in disabled | 5 failed attempts | Restart wizard (this is intentional security) |
+| Pre-Staging: 403 error | Missing RBAC role | Import `Helpdesk OSD Pre-Staging Operator.xml` in SCCM |
+| Co-management "Not Detected" | Cloud Attach not configured | Set up Cloud Attach in SCCM console |
+| Upgrade is very slow | Antivirus scanning files | Add `_SMSTaskSequence` folder to AV exclusion list |
+| Upgrade fails | Leftover files from previous attempt | Delete `C:\$WINDOWS.~BT` before retrying |
 
 ---
 
-## 🛡 Design Principles
+## 📂 Project Structure
 
-| Principle | Implementation |
-|-----------|---------------|
-| PowerShell 5.1 only | Tested on Windows PS 5.1. Uses `[wmiclass]` (SCCM TS always PS 5.1). |
-| Zero hardcoded branding | Every org name, domain, OU, software is a CLI parameter. |
-| WinPE-safe | `LdapConnection` (no ADSI COM). MessageBox fallback. Try/catch guard. |
-| Process isolation | Wrapper → child `powershell.exe`. Crash → exit 1, TS can continue. |
-| Dependency-driven ordering | Post-OSD: time → IPv6 → SCCM → Entra → MDM → co-mgmt. |
-| Self-cleaning | Cleanup task deletes both tasks + copies + markers automatically. |
-| No console required | PreStaging: REST API. Wizard: WPF GUI. |
-| PSWrap EXE compatible | C# SSL bypass works without runspace. x64 + STA + GUI. |
-| Single-reboot enforcement | Flag file ensures exactly 1 reboot for IPv6 change. |
+```
+SCCM-OSD-Deployment-Kit/
+│
+├── 📖 README.md                          ← Project overview (this file)
+├── 📄 autounattend.xml                   ← Windows OOBE bypass
+├── 📖 autounattend.md
+├── 🧹 Remove-StaleADComputer.ps1         ← WinPE: delete stale AD computer objects
+│
+├── 🖥 DeploymentWizard/
+│   ├── � Start-DeploymentWizard.ps1     ← TS wrapper (validates + launches + verifies)
+│   ├── � DeploymentWizard.ps1           ← WPF wizard application
+│   └── 📖 *.md
+│
+├── ⚙️ Post-OSD-Enrollment/
+│   ├── ⏰ Schedule-PostOSD-Enrollment.ps1 ← Retry + cleanup scheduler
+│   ├── ⚙️ Post-OSD-Enrollment-Accelerator.ps1 ← 6-section provisioning engine
+│   └── 📖 *.md
+│
+├── 📡 SCCM-OSD-PreStaging/
+│   ├── 🖥 SCCM-OSD-PreStaging.ps1        ← WPF GUI (AdminService REST API)
+│   ├── 🔐 Helpdesk OSD Pre-Staging Operator.xml ← RBAC role
+│   └── � *.md
+│
+└── 📊 Report/
+    ├── 📈 Get-OSDDeploymentReport.ps1    ← HTML status reports
+    ├── 📧 Send-QUExchangeMail.psm1       ← Graph API email module
+    └── 📖 *.md
+```
 
 ---
 
@@ -579,21 +315,15 @@ This project is licensed under the [MIT License](https://opensource.org/licenses
 **Mohammad Abdulkader Omar**
 Website: https://momar.tech
 LinkedIn: https://www.linkedin.com/in/mabdulkadr/
+Version: **1.0**
 
 ---
+
 ## ☕ Support
 
 If this project helps you, consider supporting it:
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-☕-FFDD00?style=for-the-badge)](https://www.buymeacoffee.com/mabdulkadrx)
-
----
-
-## 📊 Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| v1.0 | 2026-08-03 | Initial release: WPF deployment wizard + TS wrapper + Post-OSD enrollment accelerator + self-cleaning scheduler + SCCM-OSD-PreStaging tool (AdminService REST API, C# SSL bypass, EXE support) + autounattend.xml + deployment reporting + full documentation |
 
 ---
 

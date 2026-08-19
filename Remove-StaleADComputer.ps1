@@ -33,17 +33,17 @@
 Add-Type -AssemblyName System.DirectoryServices.Protocols
 
 $script:FallbackDomainControllers = @(
-    'dc01.momar.local',
-    'dc02.momar.local',
-    'dc03.momar.local',
-    'dc04.momar.local'
+    'dc01.your-domain.local',
+    'dc02.your-domain.local',
+    'dc03.your-domain.local',
+    'dc04.your-domain.local'
 )
 
 $script:DCFallbackIPs = @{
-    'dc01.momar.local' = '10.0.0.11'
-    'dc02.momar.local' = '10.0.0.12'
-    'dc03.momar.local' = '10.0.0.13'
-    'dc04.momar.local' = '10.0.0.14'
+    'dc01.your-domain.local' = '10.0.0.11'
+    'dc02.your-domain.local' = '10.0.0.12'
+    'dc03.your-domain.local' = '10.0.0.13'
+    'dc04.your-domain.local' = '10.0.0.14'
 }
 
 function Get-TSVariable {
