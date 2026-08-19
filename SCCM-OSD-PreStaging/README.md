@@ -1,89 +1,65 @@
-# 🚀 SCCM OSD Pre-Staging Tool — Quick Reference
+# 📡 SCCM OSD Pre-Staging Tool
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg)
-![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)
-![GUI](https://img.shields.io/badge/GUI-WPF-purple.svg)
-![SCCM](https://img.shields.io/badge/SCCM-AdminService%20REST-9C27B0.svg)
-![Version](https://img.shields.io/badge/version-1.0-green.svg)
+Quick reference for the WPF GUI tool that registers devices in SCCM before they arrive on-site.
+
+> **Full documentation:** [`SCCM-OSD-PreStaging.md`](SCCM-OSD-PreStaging.md) — architecture, SSL bypass, RBAC details, troubleshooting.
 
 ---
 
-## 📖 Overview
+## What Is It?
 
-A **WPF GUI tool** for pre-staging bare-metal devices in **SCCM/MECM** before PXE boot. Uses the **SCCM AdminService REST API** over HTTPS — **no local SCCM console required**.
+A standalone WPF GUI tool that uses the **SCCM AdminService REST API** over HTTPS to register bare-metal devices in SCCM. No SCCM console required on the workstation — just .NET Framework and network access.
 
-> **Companion Tool:** [`DeploymentWizard.ps1`](../DeploymentWizard/DeploymentWizard.md) — for on-site Task Sequence deployment. This tool is for **remote/off-site pre-staging**.
-
-> 📖 **Full documentation:** [`SCCM-OSD-PreStaging.md`](SCCM-OSD-PreStaging.md) — architecture, SSL bypass, API flow, troubleshooting, UI layout.
+> **Companion tool:** [`DeploymentWizard.ps1`](../DeploymentWizard/DeploymentWizard.md) is used on-site during OSD. This tool is for remote/off-site pre-staging.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### Default (Momar Tech)
 ```powershell
 .\SCCM-OSD-PreStaging.ps1
 ```
 
-### Custom Organization
-```powershell
-.\SCCM-OSD-PreStaging.ps1 -CompanyName "Contoso Ltd" -CompanyShort "CT" `
-    -Department "Infrastructure" -DomainName "contoso.com" `
-    -SearchBase "OU=Workstations,DC=contoso,DC=com" `
-    -DomainController "dc01.contoso.com" `
-    -SccmSiteCode "CT1" -SccmServer "sccm.contoso.com" `
-    -DefaultLanguage "ar-SA"
-```
-
-### Build to EXE (PSWrap)
-```
-Platform Target: x64 | Apartment State: STA | Output Type: GUI
-```
+Or double-click the compiled EXE (PSWrap — no PowerShell console visible).
 
 ---
 
-## ⚙️ Parameters
+## Workflow
+
+| Step | Action |
+|------|--------|
+| 1 | Sign in with domain credentials |
+| 2 | Enter MAC address (auto-formatted) and computer name |
+| 3 | Select language (English / Arabic) |
+| 4 | Browse and select target OU via live LDAP search |
+| 5 | Pick software from checkboxes |
+| 6 | Review full-detail confirmation dialog |
+| 7 | Click Pre-Stage → device registered in SCCM |
+| 8 | Fields auto-clear for next device |
+
+When the device is powered on and PXE-booted, SCCM already knows everything about it.
+
+---
+
+## Configuration
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `-CompanyName` | `Momar Tech` | Organization name in window title |
+| `-CompanyName` | `Momar Tech` | Window title |
 | `-CompanyShort` | `MT` | Logo badge text (2-3 chars) |
-| `-Department` | `IT Operations` | Header/footer subtitle |
-| `-DomainName` | `momar.local` | AD domain for auth and join |
-| `-SearchBase` | `OU=Domain Computers,DC=Momar,DC=local` | Root OU DN for LDAP |
-| `-DomainController` | `dc01.momar.local` | DC hostname for LDAP |
+| `-Department` | `IT Operations` | Header subtitle |
+| `-DomainName` | `momar.local` | AD domain for auth + join |
+| `-SearchBase` | `OU=Domain Computers,DC=Momar,DC=local` | LDAP root OU |
+| `-DomainController` | `dc01.momar.local` | DC hostname |
 | `-SccmSiteCode` | `MT1` | SCCM site code |
-| `-SccmServer` | `SCCM.Momar.local` | SMS Provider FQDN |
+| `-SccmServer` | `SCCM.Momar.local` | AdminService FQDN |
 | `-OrgName` | `Momar Tech` | Written to `OSDRegisteredOrgName` |
-| `-DefaultLanguage` | `en-US` | OS language (`en-US` / `ar-SA`) |
-| `-Software` | `"Cisco AnyConnect VPN\|App_CiscoAnyConnect\|true"` | Format: `DisplayName\|TSVar\|Default` |
+| `-DefaultLanguage` | `en-US` | OS language |
+| `-Software` | Cisco AnyConnect | `Name\|TSVar\|Default` |
 
 ---
 
-## 🔐 SCCM RBAC Security Role
-
-The `Helpdesk OSD Pre-Staging Operator.xml` file is a pre-built SCCM Security Role that grants **exactly the permissions needed** for device pre-staging — no more, no less.
-
-| ObjectType | Permission | What It Allows |
-|------------|------------|----------------|
-| **SMS_R_System** | Create + Read Resource + Set Security Scope | Import new computers and verify the import |
-| **SMS_MachineSettings** | Create + Set OSD Variables | Inject all OSD variables (name, OU, domain, software, language, credentials) |
-
-### Setup Steps
-
-1. In SCCM Admin Console: **Administration → Security → Security Roles → Import Security Role**
-2. Select `Helpdesk OSD Pre-Staging Operator.xml` from this folder
-3. Navigate to **Administrative Users → Add User or Group**
-4. Select the AD user/group for the helpdesk team
-5. Assign the `Helpdesk OSD Pre-Staging Operator` role
-6. Scope to the appropriate collections (e.g., "All Workstations")
-
-> **Full documentation:** [`SCCM-OSD-PreStaging.md`](SCCM-OSD-PreStaging.md) — includes detailed permission breakdown, what the role does NOT grant, and why each permission is needed.
-
----
-
-## ⚙️ Requirements
+## Requirements
 
 | Requirement | Minimum |
 |-------------|---------|
@@ -91,24 +67,29 @@ The `Helpdesk OSD Pre-Staging Operator.xml` file is a pre-built SCCM Security Ro
 | .NET Framework | 4.6.2+ |
 | SCCM | AdminService REST API on SMS Provider (HTTPS) |
 | Network | HTTPS to SCCM, LDAP to DC |
-| Permissions | SCCM RBAC + Domain credentials |
+| RBAC Role | Import `Helpdesk OSD Pre-Staging Operator.xml` |
 
 ---
 
-## 📜 License
+## RBAC Setup (One-Time)
 
-This project is licensed under the [MIT License](../LICENSE).
+1. **SCCM Console → Administration → Security → Security Roles**
+2. Right-click → **Import Security Role** → select the XML file
+3. **Administrative Users → Add User or Group** → pick your helpdesk team
+4. Assign the `Helpdesk OSD Pre-Staging Operator` role
+5. Select the appropriate Security Scope
 
----
-
-## 👤 Author
-
-**Mohammad Abdulkader Omar**
-Website: https://momar.tech
-LinkedIn: https://www.linkedin.com/in/mabdulkadr/
+For full RBAC details, see the [full documentation](SCCM-OSD-PreStaging.md).
 
 ---
 
-## ⚠ Disclaimer
+## Common Issues
 
-These scripts are provided as-is. Test them in a staging environment before applying them to production. The author is not responsible for any unintended outcomes resulting from their use.
+| Problem | Fix |
+|---------|-----|
+| `403 Forbidden` | RBAC role not imported or assigned to user |
+| SSL certificate error | C# bypass handles it — check startup log if using EXE |
+| OU DataGrid empty | Check DC connectivity, sign in with valid credentials |
+| MAC rejected | Type 12 hex characters — tool adds colons automatically |
+| Sign-in disabled | 5 failed attempts — restart tool |
+| API timeout | Port 443 to SMS Provider must be open |
