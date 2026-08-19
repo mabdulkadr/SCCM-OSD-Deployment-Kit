@@ -312,10 +312,10 @@ This project is licensed under the [MIT License](https://opensource.org/licenses
 
 ## 👤 Author
 
-**Mohammad Abdulkader Omar**
-Website: https://momar.tech 
-LinkedIn: https://www.linkedin.com/in/mabdulkadr/ 
-Version: **1.0** 
+**Mohammad Abdulkader Omar**  
+Website: https://momar.tech   
+LinkedIn: https://www.linkedin.com/in/mabdulkadr/   
+Version: **1.0**   
 
 ---
 
