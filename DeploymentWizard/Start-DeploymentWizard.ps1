@@ -20,12 +20,12 @@
 
 .DESCRIPTION
     This script is the entry point for SCCM/MECM Task Sequences. It launches the
-    DeploymentWizard.ps1 WPF application in a separate PowerShell process,
+    Invoke-DeploymentWizardUI.ps1 WPF application in a separate PowerShell process,
     monitors its exit code, and reads back the Task Sequence variables written
     by the wizard for verification in the SCCM log.
 
     Architecture:
-      [SCCM TS Step] → Start-DeploymentWizard.ps1 → powershell.exe → DeploymentWizard.ps1
+      [SCCM TS Step] → Start-DeploymentWizard.ps1 → powershell.exe → Invoke-DeploymentWizardUI.ps1
                                           ↓
                                     WPF Wizard (user interaction)
                                           ↓
@@ -84,8 +84,8 @@
 .NOTES
     File Name    : Start-DeploymentWizard.ps1
     Version      : 1.0
-    Dependencies : DeploymentWizard.ps1 (must be in same directory)
-    Package      : Start-DeploymentWizard.ps1 + DeploymentWizard.ps1
+    Dependencies : Invoke-DeploymentWizardUI.ps1 (must be in same directory)
+    Package      : Start-DeploymentWizard.ps1 + Invoke-DeploymentWizardUI.ps1
     WinPE        : WinPE-PowerShell (~45 MB), WinPE-NetFX (~195 MB)
 
     Exit Codes:
@@ -99,11 +99,11 @@
     SCCM Task Sequence Integration:
        1. Add "Run PowerShell Script" step to your Task Sequence
        2. Select Start-DeploymentWizard.ps1 as the script name
-       3. Ensure both Start-DeploymentWizard.ps1 and DeploymentWizard.ps1 are in the package
+       3. Ensure both Start-DeploymentWizard.ps1 and Invoke-DeploymentWizardUI.ps1 are in the package
       4. Configure step to continue on error if you want to handle wizard errors gracefully
 
 .LINK
-    DeploymentWizard.ps1 — Main WPF wizard script
+    Invoke-DeploymentWizardUI.ps1 — Main WPF wizard script
     technical-architecture.md — Technical architecture reference
     README.md — Full setup and configuration guide
 #>
@@ -154,10 +154,10 @@ if ([string]::IsNullOrWhiteSpace($SearchBase)) {
 #    3. Get-Location — Last resort for interactive execution
 ################################################################################
 $scriptRoot = if ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } elseif ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
-$wizardPath = Join-Path $scriptRoot "DeploymentWizard.ps1"
+$wizardPath = Join-Path $scriptRoot "Invoke-DeploymentWizardUI.ps1"
 
 if (-not (Test-Path $wizardPath)) {
-    Write-Host "[$ts] [ERROR] DeploymentWizard.ps1 not found at: $wizardPath" -ForegroundColor Red
+    Write-Host "[$ts] [ERROR] Invoke-DeploymentWizardUI.ps1 not found at: $wizardPath" -ForegroundColor Red
     exit 1
 }
 

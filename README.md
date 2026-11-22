@@ -124,12 +124,12 @@ SCCM-OSD-Deployment-Kit/
 │
 ├── DeploymentWizard/                      # Phase 1: Interactive OSD wizard
 │   ├── Start-DeploymentWizard.ps1         #   TS entry point (validates + launches + verifies)
-│   ├── DeploymentWizard.ps1               #   WPF wizard application
+│   ├── Invoke-DeploymentWizardUI.ps1               #   WPF wizard application
 │   └── *.md                               #   Documentation
 │
 ├── Post-OSD-Enrollment/                   # Phase 2: Silent post-deployment
 │   ├── Schedule-PostOSD-Enrollment.ps1    #   Retry + cleanup scheduler
-│   ├── Post-OSD-Enrollment-Accelerator.ps1 #  6-section provisioning engine
+│   ├── Invoke-PostOSDEnrollment.ps1 #  6-section provisioning engine
 │   └── *.md
 │
 ├── SCCM-OSD-PreStaging/                   # Phase 0: Remote device registration
@@ -180,7 +180,7 @@ Add these steps in order:
 | 1 | Run PowerShell Script | `Start-DeploymentWizard.ps1` |
 | 2 | Run PowerShell Script | `Remove-StaleADComputer.ps1` |
 | 3 | Run PowerShell Script | `Schedule-PostOSD-Enrollment.ps1` |
-| 4 | Run PowerShell Script | `Post-OSD-Enrollment-Accelerator.ps1` |
+| 4 | Run PowerShell Script | `Invoke-PostOSDEnrollment.ps1` |
 
 Fill in each step's parameters with your organization values (see [Configuration](#️-configuration)).
 
@@ -337,6 +337,12 @@ resulting from their use.
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mabdulkadrx)
 
-Built with [**PowerShell Enterprise Admin**](https://github.com/mabdulkadr/powershell-enterprise-admin-skill)
+Built with [**PowerShell Enterprise Admin**](https://github.com/mabdulkadr/powershell-enterprise-admin)
 
 </div>
+
+## Running the GUI and building an EXE
+
+This repository ships source scripts only. Run `Run-GUI.bat` from File Explorer, or start the `.ps1` file from an elevated PowerShell session. If you need a standalone executable, convert the script with [PSWrap](https://github.com/mabdulkadr/PSWrap) and re-sign the result on your own machine. Prebuilt EXEs are no longer committed.
+
+---

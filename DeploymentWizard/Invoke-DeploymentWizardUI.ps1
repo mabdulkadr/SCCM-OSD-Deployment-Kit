@@ -73,13 +73,13 @@
     Example: @("Cisco AnyConnect VPN|App_CiscoAnyConnect|true","7-Zip|App_7Zip|false")
 
 .EXAMPLE
-    .\DeploymentWizard.ps1
+    .\Invoke-DeploymentWizardUI.ps1
 
     Runs with all Momar Tech defaults — auth against momar.local,
     LDAP search from OU=Domain Computers,DC=Momar,DC=local.
 
 .EXAMPLE
-    .\DeploymentWizard.ps1 -CompanyName "Contoso Ltd" -CompanyShort "CT" `
+    .\Invoke-DeploymentWizardUI.ps1 -CompanyName "Contoso Ltd" -CompanyShort "CT" `
         -Department "Infrastructure" -DomainName "contoso.com" `
         -SearchBase "OU=Workstations,DC=contoso,DC=com" `
         -DomainController "dc01.contoso.com" -SccmServer "sccm.contoso.com" `
@@ -89,7 +89,7 @@
     Fully customized deployment for Contoso Ltd with three software options.
 
 .NOTES
-    File Name      : DeploymentWizard.ps1
+    File Name      : Invoke-DeploymentWizardUI.ps1
     Version        : 1.0
     Author         : IT Operations, Momar Tech
     Requirements   : PowerShell 5.1+, .NET Framework 4.6.2+, AD module optional

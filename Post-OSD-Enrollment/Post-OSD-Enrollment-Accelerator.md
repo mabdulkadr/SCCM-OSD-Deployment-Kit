@@ -15,7 +15,7 @@ In SCCM Console:
 1. Open your Task Sequence
 2. Add Step, then choose Run PowerShell Script
 3. Configure:
-   - Script name: `Post-OSD-Enrollment-Accelerator.ps1`
+   - Script name: `Invoke-PostOSDEnrollment.ps1`
    - Execution policy: `Bypass`
    - Package: `SCCM-OSD-Deployment-Kit`
 4. Optional: pass `-TimeZone` and `-LogPath` parameters

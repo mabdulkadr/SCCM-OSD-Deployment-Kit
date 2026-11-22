@@ -16,11 +16,11 @@ SCCM OSD Deployment Kit
         │
         ├── Phase 1: Deployment Wizard (DeploymentWizard/)
         │       ├── Start-DeploymentWizard.ps1 (TS wrapper)
-        │       └── DeploymentWizard.ps1 (WPF application)
+        │       └── Invoke-DeploymentWizardUI.ps1 (WPF application)
         │
         └── Phase 2: Post-OSD Enrollment (Post-OSD-Enrollment/)
                 ├── Schedule-PostOSD-Enrollment.ps1 (scheduler)
-                └── Post-OSD-Enrollment-Accelerator.ps1 (engine)
+                └── Invoke-PostOSDEnrollment.ps1 (engine)
 ```
 
 Each phase is independent. They share no code and exchange data only through TSEnvironment variables.
@@ -39,13 +39,13 @@ SCCM-OSD-Deployment-Kit/
 │
 ├── DeploymentWizard/
 │   ├── Start-DeploymentWizard.ps1         ← TS entry point (wrapper)
-│   ├── DeploymentWizard.ps1               ← WPF wizard application
+│   ├── Invoke-DeploymentWizardUI.ps1               ← WPF wizard application
 │   ├── DeploymentWizard.md
 │   └── Start-DeploymentWizard.md
 │
 ├── Post-OSD-Enrollment/
 │   ├── Schedule-PostOSD-Enrollment.ps1    ← Retry + cleanup scheduler
-│   ├── Post-OSD-Enrollment-Accelerator.ps1← 6-section provisioning engine
+│   ├── Invoke-PostOSDEnrollment.ps1← 6-section provisioning engine
 │   ├── Post-OSD-Enrollment-Accelerator.md
 │   └── Schedule-PostOSD-Enrollment.md
 │
@@ -97,7 +97,7 @@ TS ends → Schedule-PostOSD-Enrollment.ps1 runs
     └─ Registers PostOSD-Cleanup task (once at +35 min)
     │
     ▼
-TS continues → Post-OSD-Enrollment-Accelerator.ps1 runs once in TS context
+TS continues → Invoke-PostOSDEnrollment.ps1 runs once in TS context
     │
     ▼
 Machine reboots → AutoLogon → PostOSD-Enrollment fires

@@ -56,12 +56,12 @@
 
 .EXAMPLE
     # Default (Arab Standard Time, C:\IntuneLogs)
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File Post-OSD-Enrollment-Accelerator.ps1
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File Invoke-PostOSDEnrollment.ps1
 
 .EXAMPLE
     # Custom time zone and log path
     powershell.exe -NoProfile -ExecutionPolicy Bypass `
-        -File Post-OSD-Enrollment-Accelerator.ps1 -LogPath D:\Logs -TimeZone 'Pacific Standard Time'
+        -File Invoke-PostOSDEnrollment.ps1 -LogPath D:\Logs -TimeZone 'Pacific Standard Time'
 
 .NOTES
     Author       : Mohammad Abdelkader

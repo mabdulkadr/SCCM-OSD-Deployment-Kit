@@ -1,7 +1,7 @@
 <#!
 .SYNOPSIS
     Registers a self-cleaning post-logon scheduled task that re-runs
-    Post-OSD-Enrollment-Accelerator.ps1.
+    Invoke-PostOSDEnrollment.ps1.
 
 .DESCRIPTION
     Run as the LAST step of the SCCM OSD Task Sequence (as SYSTEM).
@@ -26,7 +26,7 @@
     step LAST in the task sequence.
 
 .PARAMETER MainScriptPath
-    Full path to Post-OSD-Enrollment-Accelerator.ps1.
+    Full path to Invoke-PostOSDEnrollment.ps1.
     Default: same folder as this script.
 
 .PARAMETER TaskName
@@ -74,7 +74,7 @@
 #>
 
 param(
-    [string]$MainScriptPath     = (Join-Path $PSScriptRoot 'Post-OSD-Enrollment-Accelerator.ps1'),
+    [string]$MainScriptPath     = (Join-Path $PSScriptRoot 'Invoke-PostOSDEnrollment.ps1'),
     [string]$TaskName           = 'PostOSD-Enrollment',
     [string]$CleanupTaskName    = 'PostOSD-Cleanup',
     [string]$WorkDir            = 'C:\Windows\Temp\PostOSD',
@@ -127,7 +127,7 @@ if (-not (Test-Path -LiteralPath $MainScriptPath)) {
 try {
     # ─── Stable copy of the enrollment script ─────────────────────────────
     if (-not (Test-Path -LiteralPath $WorkDir)) { New-Item -ItemType Directory -Path $WorkDir -Force | Out-Null }
-    $StableMain = Join-Path $WorkDir 'Post-OSD-Enrollment-Accelerator.ps1'
+    $StableMain = Join-Path $WorkDir 'Invoke-PostOSDEnrollment.ps1'
     Copy-Item -LiteralPath $MainScriptPath -Destination $StableMain -Force
     Write-TSLog "Enrollment script copied to $StableMain"
 

@@ -10,7 +10,7 @@ Quick reference for the WPF GUI tool that registers devices in SCCM before they 
 
 A standalone WPF GUI tool that uses the SCCM AdminService REST API over HTTPS to register bare-metal devices in SCCM. No SCCM console is required on the workstation, just .NET Framework and network access.
 
-> Companion tool: [`DeploymentWizard.ps1`](../DeploymentWizard/DeploymentWizard.md) is used on-site during OSD. This tool is for remote off-site pre-staging.
+> Companion tool: [`Invoke-DeploymentWizardUI.ps1`](../DeploymentWizard/DeploymentWizard.md) is used on-site during OSD. This tool is for remote off-site pre-staging.
 
 ---
 

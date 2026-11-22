@@ -2,7 +2,7 @@
 
 A WPF GUI tool that lets helpdesk operators register bare-metal devices in SCCM **before the device arrives on-site**. It uses the SCCM AdminService REST API over HTTPS, so there is no SCCM console, module, or admin workstation setup to configure.
 
-> Companion tool: [`DeploymentWizard.ps1`](../DeploymentWizard/DeploymentWizard.md) is used on-site during the OSD process. This tool is for remote off-site pre-staging before the device arrives.
+> Companion tool: [`Invoke-DeploymentWizardUI.ps1`](../DeploymentWizard/DeploymentWizard.md) is used on-site during the OSD process. This tool is for remote off-site pre-staging before the device arrives.
 
 ---
 

@@ -2,7 +2,7 @@
 
 The Task Sequence wrapper for the Deployment Wizard. This is the script you run from the SCCM Task Sequence; it validates, launches, monitors, and verifies the wizard.
 
-> The wizard application itself is [`DeploymentWizard.ps1`](DeploymentWizard.md). Both files must be in the same `DeploymentWizard/` folder in your SCCM package.
+> The wizard application itself is [`Invoke-DeploymentWizardUI.ps1`](DeploymentWizard.md). Both files must be in the same `DeploymentWizard/` folder in your SCCM package.
 
 ---
 
@@ -58,12 +58,12 @@ The wrapper exists for two reasons:
 TS Step: Start-DeploymentWizard.ps1
    │
    ├─ 1. Validate -DomainName and -SearchBase (exit 1 if empty)
-   ├─ 2. Locate DeploymentWizard.ps1 (must be in same folder)
+   ├─ 2. Locate Invoke-DeploymentWizardUI.ps1 (must be in same folder)
    ├─ 3. Log configuration (company, domain, search base, etc.)
    ├─ 4. Launch wizard in child powershell.exe process
    │
    ▼
-DeploymentWizard.ps1 (WPF wizard — user interaction)
+Invoke-DeploymentWizardUI.ps1 (WPF wizard — user interaction)
    │
    ├─ Technician fills fields, clicks Deploy
    ├─ Wizard writes variables to TSEnvironment
@@ -87,7 +87,7 @@ Both scripts must be in the same `DeploymentWizard/` folder inside your SCCM pac
 SCCM Package Source\
 └── DeploymentWizard\
     ├── Start-DeploymentWizard.ps1    ← TS step runs this
-    └── DeploymentWizard.ps1          ← Wrapper finds and launches this
+    └── Invoke-DeploymentWizardUI.ps1          ← Wrapper finds and launches this
 ```
 
 The wrapper uses `$PSScriptRoot` to locate the wizard. If they're in different folders, it exits with an error.
@@ -107,7 +107,7 @@ The wrapper uses `$PSScriptRoot` to locate the wizard. If they're in different f
 
 | Problem | Fix |
 |---------|-----|
-| `[ERROR] DeploymentWizard.ps1 not found` | Both files must be in the same folder |
+| `[ERROR] Invoke-DeploymentWizardUI.ps1 not found` | Both files must be in the same folder |
 | `[ERROR] DomainName is required` | Pass `-DomainName` in the TS step parameters |
 | `[WARN] TSEnvironment not available` | Expected when running outside a TS (e.g., for testing) |
 | Wizard never appears | Add WinPE-PowerShell + WinPE-NetFX to boot image |

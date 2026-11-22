@@ -16,13 +16,13 @@ In SCCM Console:
    - Script name: `Schedule-PostOSD-Enrollment.ps1`
    - Execution policy: `Bypass`
    - Package: `SCCM-OSD-Deployment-Kit`
-4. Placement: second-to-last step in the Task Sequence (just before `Post-OSD-Enrollment-Accelerator.ps1`)
+4. Placement: second-to-last step in the Task Sequence (just before `Invoke-PostOSDEnrollment.ps1`)
 
 ```
 TS Step Order:
    ...
    → Schedule-PostOSD-Enrollment.ps1    ← Registers retry tasks
-   → Post-OSD-Enrollment-Accelerator.ps1 ← Runs one final time in TS
+   → Invoke-PostOSDEnrollment.ps1 ← Runs one final time in TS
    (end)
 ```
 
@@ -34,7 +34,7 @@ All parameters have sensible defaults, so you usually don't need to change anyth
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `-MainScriptPath` | `.\Post-OSD-Enrollment-Accelerator.ps1` | Accelerator to copy + schedule |
+| `-MainScriptPath` | `.\Invoke-PostOSDEnrollment.ps1` | Accelerator to copy + schedule |
 | `-TaskName` | `PostOSD-Enrollment` | Retry task name |
 | `-CleanupTaskName` | `PostOSD-Cleanup` | Cleanup task name |
 | `-WorkDir` | `C:\Windows\Temp\PostOSD` | Stable directory (outside SCCM cache) |
@@ -76,7 +76,7 @@ T+35    PostOSD-Cleanup fires
 |------|---------|---------|
 | `PostOSD-Enrollment` task (Task Scheduler) | ✅ At T+0 | ✅ At T+35 |
 | `PostOSD-Cleanup` task (Task Scheduler) | ✅ At T+0 | ✅ At T+35 (self-delete) |
-| `C:\Windows\Temp\PostOSD\Post-OSD-Enrollment-Accelerator.ps1` | ✅ At T+0 | ✅ At T+35 |
+| `C:\Windows\Temp\PostOSD\Invoke-PostOSDEnrollment.ps1` | ✅ At T+0 | ✅ At T+35 |
 | `C:\Windows\Temp\PostOSD\RebootDone.flag` | ✅ At T+~5 (if reboot needed) | ✅ At T+35 |
 
 ---
@@ -104,7 +104,7 @@ The SCCM package cache is ephemeral; SCCM deletes packages after the Task Sequen
 The retry task wraps the accelerator with a reboot handler:
 
 ```powershell
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\Windows\Temp\PostOSD\Post-OSD-Enrollment-Accelerator.ps1'
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\Windows\Temp\PostOSD\Invoke-PostOSDEnrollment.ps1'
 
 if ($LASTEXITCODE -eq 3010 -and -not (Test-Path 'C:\Windows\Temp\PostOSD\RebootDone.flag')) {
     Set-Content -LiteralPath 'C:\Windows\Temp\PostOSD\RebootDone.flag' -Value (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
