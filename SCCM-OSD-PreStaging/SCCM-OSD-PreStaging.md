@@ -1,8 +1,8 @@
 # 📡 SCCM OSD Pre-Staging Tool
 
-A WPF GUI tool that lets helpdesk operators register bare-metal devices in SCCM **before the device arrives on-site**. Uses the **SCCM AdminService REST API** over HTTPS — no SCCM console, no module, no admin workstation setup required.
+A WPF GUI tool that lets helpdesk operators register bare-metal devices in SCCM **before the device arrives on-site**. It uses the SCCM AdminService REST API over HTTPS, so there is no SCCM console, module, or admin workstation setup to configure.
 
-> **Companion tool:** [`DeploymentWizard.ps1`](../DeploymentWizard/DeploymentWizard.md) is used **on-site** during the OSD process. This tool is for **remote/off-site pre-staging** before the device even arrives.
+> Companion tool: [`DeploymentWizard.ps1`](../DeploymentWizard/DeploymentWizard.md) is used on-site during the OSD process. This tool is for remote off-site pre-staging before the device arrives.
 
 ---
 
@@ -19,13 +19,13 @@ This tool removes that friction. The helpdesk operator runs it from their office
 
 ## How It's Used
 
-**Standalone tool** — run it on any Windows workstation with HTTPS access to the SCCM AdminService:
+Standalone tool: run it on any Windows workstation with HTTPS access to the SCCM AdminService:
 
 ```powershell
 .\SCCM-OSD-PreStaging.ps1
 ```
 
-Or use a pre-compiled EXE (built with PSWrap) — double-click, no PowerShell console.
+Or use a pre-compiled EXE (built with PSWrap), which you double-click with no PowerShell console.
 
 ---
 
@@ -81,21 +81,21 @@ Device is PXE-ready in SCCM
 
 ### Step-by-Step
 
-**Step 1 — TLS Setup:**
+Step 1: TLS Setup
 - Forces TLS 1.2
-- Attaches C#-compiled SSL bypass (handles self-signed certificates)
-- Bypasses proxy, increases connection limit
+- Attaches a C#-compiled SSL bypass (handles self-signed certificates)
+- Bypasses the proxy and increases the connection limit
 
-**Step 2 — Register Machine:**
+Step 2: Register Machine
 - Endpoint: `POST /AdminService/wmi/SMS_Site.ImportMachineEntry`
 - Body: `{ MACAddress, NetbiosName, OverwriteExistingRecord: true }`
 - Response: `{ ResourceID, MachineExists, ReturnValue }`
 
-**Step 3 — Verify Resource:**
-- If `ResourceID` is in the response → use it directly (fast path)
-- Otherwise → poll `GET /AdminService/wmi/SMS_R_System` up to 6 times (2s intervals) to handle SCCM DB write latency
+Step 3: Verify Resource
+- If `ResourceID` is in the response, use it directly (fast path)
+- Otherwise, poll `GET /AdminService/wmi/SMS_R_System` up to 6 times (2s intervals) to handle SCCM DB write latency
 
-**Step 4 — Inject OSD Variables:**
+Step 4: Inject OSD Variables
 - Endpoint: `POST /AdminService/wmi/SMS_MachineSettings`
 - Body: `{ ResourceID, SourceSite, MachineVariables[] }`
 - 8+ variables injected in a single call
@@ -121,13 +121,13 @@ All variables are available to the Task Sequence automatically when the device P
 
 ## Key Features
 
-- **MAC auto-formatting** — Type 12 hex characters, tool adds colons automatically
-- **Live OU search** — Client-side filtering, works on any LDAP query size
-- **Confirmation dialog** — Full-detail preview before sending to SCCM
-- **Auto-clear after success** — MAC, name, OU cleared for next device
-- **API retry** — Up to 2 attempts on failure with retry prompt
-- **Message Center** — Color-coded log with Copy to Clipboard
-- **C# SSL bypass** — Works in compiled EXEs where PowerShell script-block callbacks fail
+- MAC auto-formatting: type 12 hex characters and the tool adds colons automatically
+- Live OU search: client-side filtering, works on any LDAP query size
+- Confirmation dialog: full-detail preview before sending to SCCM
+- Auto-clear after success: MAC, name, and OU cleared for the next device
+- API retry: up to 2 attempts on failure with a retry prompt
+- Message Center: color-coded log with Copy to Clipboard
+- C# SSL bypass: works in compiled EXEs where PowerShell script-block callbacks fail
 
 ---
 
@@ -135,15 +135,15 @@ All variables are available to the Task Sequence automatically when the device P
 
 SCCM AdminService often uses a self-signed certificate. The standard PowerShell workaround for accepting any certificate fails in compiled EXEs (no PowerShell runspace on .NET thread-pool threads).
 
-**The solution:** A C#-compiled static class loaded via `Add-Type`. This is a true .NET delegate — no PowerShell runspace needed. A script-block fallback is kept for interactive PowerShell use.
+Solution: a C#-compiled static class loaded via `Add-Type`. This is a true .NET delegate, so no PowerShell runspace is needed. A script-block fallback is kept for interactive PowerShell use.
 
-TLS 1.2 is applied at script startup AND before every API call (double-hardened).
+TLS 1.2 is applied at script startup and again before every API call.
 
 ---
 
 ## SCCM RBAC Role
 
-The included `Helpdesk OSD Pre-Staging Operator.xml` file grants helpdesk operators **exactly the permissions needed** — no more, no less.
+The included `Helpdesk OSD Pre-Staging Operator.xml` file grants helpdesk operators only the permissions they need.
 
 ### What It Grants
 
@@ -166,10 +166,10 @@ The included `Helpdesk OSD Pre-Staging Operator.xml` file grants helpdesk operat
 
 ### Setup Steps
 
-1. **SCCM Console → Administration → Security → Security Roles**
-2. Right-click → **Import Security Role**
+1. SCCM Console → Administration → Security → Security Roles
+2. Right-click → Import Security Role
 3. Select `Helpdesk OSD Pre-Staging Operator.xml`
-4. **Administration → Administrative Users → Add User or Group**
+4. Administration → Administrative Users → Add User or Group
 5. Select the AD user/group for your helpdesk team
 6. Assign the `Helpdesk OSD Pre-Staging Operator` role
 7. Select the appropriate Security Scope

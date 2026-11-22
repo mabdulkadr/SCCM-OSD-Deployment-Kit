@@ -1,6 +1,6 @@
 # 📐 Technical Architecture
 
-This document covers the internal architecture of the SCCM OSD Deployment Kit. It explains **how** the toolkit works under the hood — for users who want to understand, modify, or troubleshoot the scripts.
+This document covers the internal architecture of the SCCM OSD Deployment Kit. It explains how the toolkit works, for readers who want to understand, modify, or troubleshoot the scripts.
 
 > **Most users don't need this.** Start with the [main README](../README.md) and per-module docs. Come back here when you need deeper understanding.
 
@@ -23,7 +23,7 @@ SCCM OSD Deployment Kit
                 └── Post-OSD-Enrollment-Accelerator.ps1 (engine)
 ```
 
-Each phase is **independent** — they share no code, only data flow through TSEnvironment variables.
+Each phase is independent. They share no code and exchange data only through TSEnvironment variables.
 
 ---
 
@@ -163,7 +163,7 @@ PasswordBox.Password
                   App_*            = TRUE / not set
 ```
 
-**Security guarantees:**
+Security guarantees:
 
 - Password only stored in `$script:JoinPass` (memory only, never disk)
 - `OSDJoinPassword` is a hidden TS variable (masked in `smsts.log`)
@@ -174,9 +174,9 @@ PasswordBox.Password
 
 ## 📡 LDAP Browsing in WinPE
 
-Traditional `DirectorySearcher` (ADSI COM) **does not work** in WinPE because the COM object can't be instantiated.
+Traditional `DirectorySearcher` (ADSI COM) does not work in WinPE because the COM object can't be instantiated.
 
-**Solution:** Use `System.DirectoryServices.Protocols.LdapConnection` — pure .NET TCP socket, no COM dependency.
+Solution: use `System.DirectoryServices.Protocols.LdapConnection`, a pure .NET TCP socket with no COM dependency.
 
 | | DirectorySearcher | LdapConnection |
 |---|---|---|
@@ -311,22 +311,22 @@ if ($LASTEXITCODE -eq 3010 -and -not (Test-Path 'RebootDone.flag')) {
 }
 ```
 
-This ensures **exactly one reboot** per deployment — no infinite loops.
+This ensures exactly one reboot per deployment and avoids infinite loops.
 
 ---
 
 ## 🛡 Design Principles
 
-1. **Self-contained** — No external binaries, modules, or XML configs required
-2. **PowerShell 5.1 only** — Compatible with SCCM TS environment
-3. **WinPE-safe** — Pure .NET, no COM dependencies, MessageBox fallbacks
-4. **Process isolation** — Wizard runs in child process; UI crash can't kill TS
-5. **Idempotent** — Safe to run multiple times
-6. **Self-cleaning** — Post-OSD scheduler removes itself and all artifacts
-7. **Parameter-driven** — Every org-specific value is a parameter
-8. **Least privilege** — RBAC role grants only the permissions needed
-9. **Dependency-ordered** — Post-OSD sections run in strict prerequisite order
-10. **Observable** — Tab-separated logs, color-coded UI, full TS variable readback
+1. Self-contained: no external binaries, modules, or XML configs required
+2. PowerShell 5.1 only: compatible with the SCCM TS environment
+3. WinPE-safe: pure .NET, no COM dependencies, with MessageBox fallbacks
+4. Process isolation: the wizard runs in a child process, so a UI crash can't kill the TS
+5. Idempotent: safe to run multiple times
+6. Self-cleaning: the Post-OSD scheduler removes itself and all artifacts
+7. Parameter-driven: every org-specific value is a parameter
+8. Least privilege: the RBAC role grants only the permissions needed
+9. Dependency-ordered: Post-OSD sections run in strict prerequisite order
+10. Observable: tab-separated logs, color-coded UI, and full TS variable readback
 
 ---
 

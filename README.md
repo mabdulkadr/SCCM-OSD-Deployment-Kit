@@ -6,14 +6,15 @@
 
 Interactive WPF wizards, remote pre-staging, post-OSD enrollment, and executive reporting — one self-contained toolkit, no external binaries.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![PowerShell](https://img.shields.io/badge/powershell-5.1%2B-blue.svg)
-![Platform](https://img.shields.io/badge/Windows-10%2F11-blue.svg)
-![UI](https://img.shields.io/badge/UI-WPF%20WinPE-blue.svg)
-![SCCM](https://img.shields.io/badge/SCCM-MECM%20CB%201902%2B-orange.svg)
-![Version](https://img.shields.io/badge/version-1.0-green.svg)
+[![Mode](https://img.shields.io/badge/Mode-CLI-334155?style=for-the-badge)](#-usage)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?style=for-the-badge&logo=powershell&logoColor=white)](https://learn.microsoft.com/en-us/powershell/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0F172A?style=for-the-badge)](#%EF%B8%8F-requirements)
+[![UI](https://img.shields.io/badge/UI-WPF%20WinPE-3B82F6?style=for-the-badge&logo=windows&logoColor=white)](#%EF%B8%8F-usage)
+[![SCCM](https://img.shields.io/badge/SCCM-MECM%20CB%201902%2B-F59E0B?style=for-the-badge)](#-overview)
+[![License](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](#-license)
+[![Version](https://img.shields.io/badge/Version-1.0-334155?style=for-the-badge)](#-overview)
 
-[Overview](#-overview) • [Scenarios](#-deployment-scenarios) • [Quick Start](#-quick-start) • [Components](#-components-in-detail) • [Troubleshooting](#-troubleshooting)
+[Overview](#-overview) • [Features](#-core-features) • [Scenarios](#-deployment-scenarios) • [Quick Start](#-quick-start) • [Components](#-components-in-detail) • [Troubleshooting](#-troubleshooting) • [License](#-license)
 
 </div>
 
@@ -21,11 +22,11 @@ Interactive WPF wizards, remote pre-staging, post-OSD enrollment, and executive 
 
 # 📖 Overview
 
-**SCCM OSD Deployment Kit** is a self-contained PowerShell toolkit that adds interactive WPF wizards and full lifecycle automation to your SCCM/MECM Windows 11 deployment process. No external binaries, no XML configuration files — copy the folder and go.
+SCCM OSD Deployment Kit adds WPF wizards and deployment automation to an SCCM or MECM Windows 11 task sequence. It comes as a folder of PowerShell scripts and needs no extra binaries or XML configuration.
 
-It replaces the rigid zero-touch deployment model with **user-driven, technician-friendly workflows** covering every support scenario: on-site installs, remote deployments via pre-staging, and in-place upgrades.
+The toolkit covers on-site installs, remote deployments where a device is pre-staged, and in-place upgrades. Compared with UI++ and TsGui, it needs no compiled executable or XML config, includes pre-staging and post-OSD enrollment, and ships an RBAC role for helpdesk staff.
 
-### Why This Toolkit?
+### Toolkit comparison
 
 | Feature | This Toolkit | UI++ | TsGui |
 |---------|--------------|------|-------|
@@ -38,11 +39,19 @@ It replaces the rigid zero-touch deployment model with **user-driven, technician
 
 ---
 
+# ✨ Core Features
+
+* Interactive WPF wizards for user-driven Windows 11 deployment in WinPE
+* Remote device pre-staging through the SCCM AdminService REST API
+* Silent post-OSD enrollment and HTML reporting
+
+---
+
 ## 🖼️ Screenshots
 
 ![Deployment Wizard — interactive OSD wizard running in WinPE](images/DeploymentWizard.png)
 
-*Deployment Wizard: domain sign-in, computer name, OU selection, software picks, and language — all collected before the task sequence continues.*
+*Deployment Wizard: domain sign-in, computer name, OU selection, software picks, and language, all collected before the task sequence continues.*
 
 ![SCCM OSD Pre-Staging Tool — helpdesk GUI for remote device registration](images/SCCM-OSD-PreStaging.png)
 
@@ -52,7 +61,7 @@ It replaces the rigid zero-touch deployment model with **user-driven, technician
 
 # 🚀 Deployment Scenarios
 
-The toolkit supports three scenarios covering every support situation:
+The toolkit supports three scenarios:
 
 | Scenario | When to Use | What Happens |
 |----------|-------------|--------------|
@@ -179,8 +188,8 @@ Fill in each step's parameters with your organization values (see [Configuration
 
 Replace the default placeholders in every script's parameter block. The two most important:
 
-* `-DomainName` — your AD domain (e.g., `contoso.local`)
-* `-SearchBase` — your LDAP search base (e.g., `OU=Workstations,DC=contoso,DC=local`)
+* `-DomainName`: your AD domain (e.g., `contoso.local`)
+* `-SearchBase`: your LDAP search base (e.g., `OU=Workstations,DC=contoso,DC=local`)
 
 See each module's documentation for the full list.
 
@@ -206,8 +215,8 @@ Replace these in every script's parameter block:
 
 ### Where to Configure
 
-* **For TS steps:** right-click the step in the SCCM Console → Properties → fill in the **Parameters** field
-* **For the Pre-Staging Tool:** pass values as script parameters or edit the defaults in the script header
+* For TS steps: right-click the step in the SCCM Console → Properties → fill in the **Parameters** field
+* For the Pre-Staging Tool: pass values as script parameters or edit the defaults in the script header
 
 ---
 
@@ -215,15 +224,15 @@ Replace these in every script's parameter block:
 
 ### 🖥️ Deployment Wizard
 
-Interactive WPF wizard that runs in WinPE during OSD. Collects everything the task sequence needs — computer name, OU, credentials, software, language — and writes it as Task Sequence variables.
+Interactive WPF wizard that runs in WinPE during OSD. It collects everything the task sequence needs (computer name, OU, credentials, software, and language) and writes it as Task Sequence variables.
 
-**TS Step:** `Start-DeploymentWizard.ps1` (the wrapper that validates, launches, monitors, and verifies)
+TS step: `Start-DeploymentWizard.ps1` (the wrapper that validates, launches, monitors, and verifies)
 
 > 📖 [Read full documentation →](DeploymentWizard/DeploymentWizard.md)
 
 ### 📡 Pre-Staging Tool
 
-WPF GUI for helpdesk operators to register bare-metal devices in SCCM **before they arrive on-site**. Uses the SCCM AdminService REST API over HTTPS — no SCCM console required on the operator's workstation. Ships with a compiled `.exe` and a ready-made RBAC role (`Helpdesk OSD Pre-Staging Operator.xml`).
+WPF GUI for helpdesk operators to register bare-metal devices in SCCM **before they arrive on-site**. It uses the SCCM AdminService REST API over HTTPS, so no SCCM console is required on the operator's workstation. It ships with a compiled `.exe` and a ready-made RBAC role (`Helpdesk OSD Pre-Staging Operator.xml`).
 
 > 📖 [Read full documentation →](SCCM-OSD-PreStaging/SCCM-OSD-PreStaging.md)
 
@@ -231,12 +240,12 @@ WPF GUI for helpdesk operators to register bare-metal devices in SCCM **before t
 
 Silent SYSTEM-context provisioning that runs at the end of the task sequence. Six dependency-ordered steps:
 
-1. **Time Service** — sync from PDC, configure time zone
-2. **IPv6 Disable** — adapter + registry (single reboot guard)
-3. **SCCM Actions** — trigger 8 standard actions + Windows Update refresh
-4. **Entra ID Join** — Hybrid Azure AD join
-5. **MDM Enrollment** — Intune auto-enrollment
-6. **Co-Management** — verify SCCM + Intune co-management
+1. Time Service: sync from PDC, configure time zone
+2. IPv6 Disable: adapter and registry, with a single reboot guard
+3. SCCM Actions: trigger 8 standard actions and a Windows Update refresh
+4. Entra ID Join: Hybrid Azure AD join
+5. MDM Enrollment: Intune auto-enrollment
+6. Co-Management: verify SCCM and Intune co-management
 
 A built-in scheduler retries every 5 min × 30 min, then self-cleans everything.
 
@@ -250,8 +259,8 @@ Minimal Windows Setup answer file that hides OOBE screens and bypasses the Windo
 
 ### 📊 Reporting
 
-* **`Get-OSDDeploymentReport.ps1`** — generates HTML executive reports from SCCM WMI
-* **`Send-QUExchangeMail.psm1`** — sends email via Microsoft Graph API (OAuth 2.0)
+* `Get-OSDDeploymentReport.ps1`: generates HTML executive reports from SCCM WMI
+* `Send-QUExchangeMail.psm1`: sends email via Microsoft Graph API (OAuth 2.0)
 
 > 📖 [Report documentation →](Report/Get-OSDDeploymentReport.md)
 
@@ -288,18 +297,18 @@ Minimal Windows Setup answer file that hides OOBE screens and bypasses the Windo
 
 # 🛡 Operational Notes
 
-* **Test in staging first** — run the full task sequence on a pilot device before fleet-wide rollout
-* **RBAC least privilege** — the Pre-Staging operator role limits helpdesk to device registration only; import the provided XML instead of granting broader rights
-* **Secrets handling** — report email uses OAuth 2.0 client credentials; keep the app secret in a protected variable or secrets manager, never hardcoded
-* **Boot image hygiene** — keep WinPE components minimal (NetFx + PowerShell only); update DPs after any change
-* **Stale objects** — schedule `Remove-StaleADComputer.ps1` in every deployment to prevent duplicate account conflicts
-* **Upgrade exclusions** — add `_SMSTaskSequence` to antivirus exclusions to avoid slow in-place upgrades
+* Test in staging first: run the full task sequence on a pilot device before fleet-wide rollout
+* RBAC least privilege: the Pre-Staging operator role limits helpdesk to device registration only; import the provided XML instead of granting broader rights
+* Secrets handling: report email uses OAuth 2.0 client credentials; keep the app secret in a protected variable or secrets manager, never hardcoded
+* Boot image hygiene: keep WinPE components minimal (NetFx and PowerShell only); update DPs after any change
+* Stale objects: schedule `Remove-StaleADComputer.ps1` in every deployment to prevent duplicate account conflicts
+* Upgrade exclusions: add `_SMSTaskSequence` to antivirus exclusions to avoid slow in-place upgrades
 
 ---
 
 ## 👤 Author
 
-**Mohammad Abdulkader Omar**  
+**Mohammad Abdelkader Omar**  
 GitHub: [@mabdulkadr](https://github.com/mabdulkadr)  
 Website: [momar.tech](https://momar.tech)  
 

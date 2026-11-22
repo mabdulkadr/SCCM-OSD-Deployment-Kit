@@ -2,7 +2,7 @@
 
 Generates an HTML executive report of your OSD deployment status, then optionally sends it via email using Microsoft Graph API.
 
-> Runs as a standalone script — not part of the Task Sequence. Schedule it (via Task Scheduler or similar) to run daily/weekly for ongoing visibility.
+> Runs as a standalone script, outside the Task Sequence. Schedule it (via Task Scheduler or similar) to run daily or weekly for ongoing visibility.
 
 ---
 
@@ -10,11 +10,11 @@ Generates an HTML executive report of your OSD deployment status, then optionall
 
 Queries SCCM WMI for OSD deployment data and produces a comprehensive HTML report with:
 
-- **Summary cards** — Total / Success / Failed / Running counts
-- **Deployment summary** — Compliance statistics per deployment
-- **Per-TS breakdown** — Success rate bars per Task Sequence
-- **Duration statistics** — Average, fastest, slowest deployment times
-- **Device details** — Per-device status, phase, duration, and error messages
+- Summary cards: Total / Success / Failed / Running counts
+- Deployment summary: compliance statistics per deployment
+- Per-TS breakdown: success rate bars per Task Sequence
+- Duration statistics: average, fastest, and slowest deployment times
+- Device details: per-device status, phase, duration, and error messages
 
 The report is Outlook-safe (inline CSS, table-based layout, no JavaScript).
 
@@ -76,9 +76,9 @@ The script queries these WMI classes:
 
 ## Email Setup (Microsoft Graph API)
 
-Uses OAuth 2.0 client credentials flow — **no SMTP, no basic auth**.
+Uses the OAuth 2.0 client credentials flow, with no SMTP or basic auth.
 
-**Required Azure AD setup:**
+Required Azure AD setup:
 
 1. Register an app in Azure AD (e.g., `OSD-Report-Sender`)
 2. Grant the `Mail.Send` **Application** permission
@@ -86,7 +86,7 @@ Uses OAuth 2.0 client credentials flow — **no SMTP, no basic auth**.
 4. Add `Send As` permission for the sender mailbox in Exchange
 5. Copy the Tenant ID, Client ID, and Client Secret into the script
 
-**Secret resolution order:**
+Secret resolution order:
 
 1. `-ClientSecret` parameter (SecureString)
 2. `$env:OSD_REPORT_CLIENT_SECRET` environment variable
@@ -123,4 +123,4 @@ Uses OAuth 2.0 client credentials flow — **no SMTP, no basic auth**.
 
 ## Related Documentation
 
-- [Send-QUExchangeMail.md](Send-QUExchangeMail.md) — The Graph API email module used internally
+- [Send-QUExchangeMail.md](Send-QUExchangeMail.md): the Graph API email module used internally

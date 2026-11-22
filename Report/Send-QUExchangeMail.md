@@ -1,6 +1,6 @@
 # 📧 Send-QUExchangeMail.psm1
 
-A reusable PowerShell module for sending HTML email via Microsoft Graph API. OAuth 2.0 client credentials — no SMTP, no basic auth, no legacy protocols.
+A reusable PowerShell module for sending HTML email via Microsoft Graph API. It uses OAuth 2.0 client credentials, with no SMTP, basic auth, or legacy protocols.
 
 > Used internally by `Get-OSDDeploymentReport.ps1`. Can also be imported and used by any custom script that needs to send email.
 
@@ -17,7 +17,7 @@ Send-QUExchangeMail -From "noreply@your-domain.com" `
     -Body "<h1>Hello World</h1>"
 ```
 
-The default TenantId, ClientId, and ClientSecret are embedded — you only need to pass them if you want to override.
+The default TenantId, ClientId, and ClientSecret are embedded, so you only need to pass them if you want to override.
 
 ---
 
@@ -72,13 +72,13 @@ The module checks these in order until it finds a value:
 
 ## Azure AD App Setup
 
-1. **Azure Portal → App registrations → New registration**
+1. Azure Portal → App registrations → New registration
 2. Name it something like `Exchange-Email-Sender`
-3. Copy the **Tenant ID** and **Client ID** into the module
-4. **Certificates & secrets → New client secret** → copy the secret value
-5. **API permissions → Add permission → Microsoft Graph → Application permissions → Mail.Send**
-6. Click **Grant admin consent**
-7. In **Exchange Admin**, grant `Send As` permission for the sender mailbox to the app
+3. Copy the Tenant ID and Client ID into the module
+4. Certificates & secrets → New client secret, then copy the secret value
+5. API permissions → Add permission → Microsoft Graph → Application permissions → Mail.Send
+6. Click Grant admin consent
+7. In Exchange Admin, grant `Send As` permission for the sender mailbox to the app
 
 ---
 
@@ -142,7 +142,7 @@ Send-QUExchangeMail -From "noreply@your-domain.com" -To "admin@your-domain.com" 
 
 ## Security Notes
 
-- **Never commit secrets to source control.** Use `-ClientSecret` parameter, environment variable, or a secrets management solution.
-- **Rotate client secrets** every 6 months via Azure AD → Certificates & secrets.
-- **Use a dedicated service mailbox** (e.g., `noreply@your-domain.com`) for clear audit trails.
-- **Application permissions only** — no user impersonation, no interactive login required.
+- Never commit secrets to source control. Use the `-ClientSecret` parameter, an environment variable, or a secrets management solution.
+- Rotate client secrets every 6 months via Azure AD → Certificates & secrets.
+- Use a dedicated service mailbox (e.g., `noreply@your-domain.com`) for clear audit trails.
+- Application permissions only: no user impersonation or interactive login required.

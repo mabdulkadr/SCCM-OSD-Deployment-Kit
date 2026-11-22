@@ -1,6 +1,6 @@
 # 🚀 Start-DeploymentWizard.ps1
 
-The Task Sequence wrapper for the Deployment Wizard. This is the script you actually run from the SCCM Task Sequence — it validates, launches, monitors, and verifies the wizard.
+The Task Sequence wrapper for the Deployment Wizard. This is the script you run from the SCCM Task Sequence; it validates, launches, monitors, and verifies the wizard.
 
 > The wizard application itself is [`DeploymentWizard.ps1`](DeploymentWizard.md). Both files must be in the same `DeploymentWizard/` folder in your SCCM package.
 
@@ -8,15 +8,15 @@ The Task Sequence wrapper for the Deployment Wizard. This is the script you actu
 
 ## How It's Used
 
-**In SCCM Console:**
+In SCCM Console:
 
 1. Open your Task Sequence
-2. Add Step → **Run PowerShell Script**
+2. Add Step, then choose Run PowerShell Script
 3. Configure:
-   - **Script name:** `Start-DeploymentWizard.ps1`
-   - **Execution policy:** `Bypass`
-   - **Timeout:** `30` minutes (the wizard waits for technician interaction)
-   - **Package:** `SCCM-OSD-Deployment-Kit`
+   - Script name: `Start-DeploymentWizard.ps1`
+   - Execution policy: `Bypass`
+   - Timeout: `30` minutes (the wizard waits for technician interaction)
+   - Package: `SCCM-OSD-Deployment-Kit`
 4. Fill in the parameters (see below)
 
 ---
@@ -38,17 +38,17 @@ Fill in the TS step parameters with your organization values:
 | `-DefaultLanguage` | `en-US` | No | OS language |
 | `-Software` | Cisco AnyConnect | No | `Name\|TSVar\|Default` |
 
-> ⚠️ `-DomainName` and `-SearchBase` are **required** — the script exits with code 1 if either is empty.
+> ⚠️ `-DomainName` and `-SearchBase` are required; the script exits with code 1 if either is empty.
 
 ---
 
 ## Why a Wrapper?
 
-You might wonder why this script exists separately from the wizard. Two reasons:
+The wrapper exists for two reasons:
 
-1. **Process isolation** — the wizard runs in a child `powershell.exe` process. If the wizard UI crashes or hangs, the Task Sequence step is not affected. The wrapper can gracefully exit and the TS can continue.
+1. Process isolation: the wizard runs in a child `powershell.exe` process. If the wizard UI crashes or hangs, the Task Sequence step is not affected, and the wrapper can exit cleanly so the TS can continue.
 
-2. **Variable verification** — after the wizard closes, the wrapper reads back ALL the variables from `TSEnvironment` and logs them to `smsts.log`. This gives you a single audit point — you can see exactly what values were set for every deployment.
+2. Variable verification: after the wizard closes, the wrapper reads back all the variables from `TSEnvironment` and logs them to `smsts.log`. This gives you a single audit point where you can see exactly what values were set for every deployment.
 
 ---
 
@@ -90,7 +90,7 @@ SCCM Package Source\
     └── DeploymentWizard.ps1          ← Wrapper finds and launches this
 ```
 
-The wrapper uses `$PSScriptRoot` to locate the wizard — if they're in different folders, the wrapper exits with an error.
+The wrapper uses `$PSScriptRoot` to locate the wizard. If they're in different folders, it exits with an error.
 
 ---
 
@@ -117,5 +117,5 @@ The wrapper uses `$PSScriptRoot` to locate the wizard — if they're in differen
 
 ## Related Documentation
 
-- [DeploymentWizard.md](DeploymentWizard.md) — The wizard application itself
-- [Technical Architecture](../technical-architecture.md) — Deep dive into the wrapper architecture
+- [DeploymentWizard.md](DeploymentWizard.md): the wizard application itself
+- [Technical Architecture](../technical-architecture.md): details of the wrapper architecture

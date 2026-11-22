@@ -1,23 +1,23 @@
 # ⚙️ Post-OSD Enrollment Accelerator
 
-The silent provisioning engine that runs at the end of your Task Sequence. Performs six dependency-ordered steps that get the device fully managed — joined to Entra ID, enrolled in Intune, and co-managed with SCCM.
+The silent provisioning engine that runs at the end of your Task Sequence. It performs six dependency-ordered steps to join the device to Entra ID, enroll it in Intune, and co-manage it with SCCM.
 
-> **Run as:** SYSTEM account (automatic in Task Sequence)
-> **Placement:** Last step in your Task Sequence, after `Schedule-PostOSD-Enrollment.ps1`
-> **Companion script:** [`Schedule-PostOSD-Enrollment.ps1`](Schedule-PostOSD-Enrollment.md) handles retries and cleanup
+> Run as: SYSTEM account (automatic in Task Sequence)
+> Placement: last step in your Task Sequence, after `Schedule-PostOSD-Enrollment.ps1`
+> Companion script: [`Schedule-PostOSD-Enrollment.ps1`](Schedule-PostOSD-Enrollment.md) handles retries and cleanup
 
 ---
 
 ## How It's Used
 
-**In SCCM Console:**
+In SCCM Console:
 
 1. Open your Task Sequence
-2. Add Step → **Run PowerShell Script**
+2. Add Step, then choose Run PowerShell Script
 3. Configure:
-   - **Script name:** `Post-OSD-Enrollment-Accelerator.ps1`
-   - **Execution policy:** `Bypass`
-   - **Package:** `SCCM-OSD-Deployment-Kit`
+   - Script name: `Post-OSD-Enrollment-Accelerator.ps1`
+   - Execution policy: `Bypass`
+   - Package: `SCCM-OSD-Deployment-Kit`
 4. Optional: pass `-TimeZone` and `-LogPath` parameters
 
 This step runs as the last step of your Task Sequence. It must run **after** domain join and SCCM client installation.
@@ -48,12 +48,12 @@ Six sections, executed in this exact order. Each depends on the previous one:
 
 ### Why This Order?
 
-- **Time first** — Kerberos needs clock sync within 5 minutes. TLS certs need accurate time.
-- **IPv6 second** — Independent of everything else, fast, and it may trigger the reboot flag.
-- **SCCM actions third** — Fire-and-forget; client may not be fully ready, retries handle that.
-- **Entra fourth** — Required for MDM enrollment.
-- **MDM fifth** — Requires Entra join + tenant info.
-- **Co-Management last** — Confirms everything else worked.
+- Time first: Kerberos needs clock sync within 5 minutes, and TLS certificates need accurate time.
+- IPv6 second: it is independent of everything else, is fast, and may trigger the reboot flag.
+- SCCM actions third: these are fire-and-forget, since the client may not be fully ready, and retries handle that.
+- Entra fourth: required for MDM enrollment.
+- MDM fifth: requires the Entra join and tenant info.
+- Co-Management last: confirms everything else worked.
 
 ---
 
@@ -112,4 +112,4 @@ When running inside a Task Sequence, the `_SMSTSLogPath` variable automatically 
 
 ## Related Documentation
 
-- [Schedule-PostOSD-Enrollment.md](Schedule-PostOSD-Enrollment.md) — Retry + cleanup scheduler that runs this accelerator
+- [Schedule-PostOSD-Enrollment.md](Schedule-PostOSD-Enrollment.md): the retry and cleanup scheduler that runs this accelerator

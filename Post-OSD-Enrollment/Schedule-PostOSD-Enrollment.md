@@ -2,21 +2,21 @@
 
 The retry + cleanup scheduler for the Post-OSD enrollment pipeline. Registers a post-logon task that re-runs the accelerator every 5 minutes for 30 minutes, then self-destructs everything at +35 min.
 
-> **Why this exists:** Some operations (Entra ID join, MDM enrollment) take longer than the Task Sequence runtime. This script bridges that gap by scheduling retries after the user logs in.
+> Why this exists: some operations (Entra ID join, MDM enrollment) take longer than the Task Sequence runtime. This script bridges that gap by scheduling retries after the user logs in.
 
 ---
 
 ## How It's Used
 
-**In SCCM Console:**
+In SCCM Console:
 
 1. Open your Task Sequence
-2. Add Step → **Run PowerShell Script**
+2. Add Step, then choose Run PowerShell Script
 3. Configure:
-   - **Script name:** `Schedule-PostOSD-Enrollment.ps1`
-   - **Execution policy:** `Bypass`
-   - **Package:** `SCCM-OSD-Deployment-Kit`
-4. **Placement:** Second-to-last step in the Task Sequence (just before `Post-OSD-Enrollment-Accelerator.ps1`)
+   - Script name: `Schedule-PostOSD-Enrollment.ps1`
+   - Execution policy: `Bypass`
+   - Package: `SCCM-OSD-Deployment-Kit`
+4. Placement: second-to-last step in the Task Sequence (just before `Post-OSD-Enrollment-Accelerator.ps1`)
 
 ```
 TS Step Order:
@@ -30,7 +30,7 @@ TS Step Order:
 
 ## Configuration
 
-All parameters have sensible defaults — you usually don't need to change anything:
+All parameters have sensible defaults, so you usually don't need to change anything:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
@@ -95,13 +95,13 @@ T+35    PostOSD-Cleanup fires
 
 ## Why Copy the Script?
 
-The SCCM package cache is ephemeral — SCCM deletes packages after the Task Sequence completes. A scheduled task pointing to a script in the package cache would break the first time SCCM cleans up. This script copies the accelerator to `C:\Windows\Temp\PostOSD\` which is outside the cache and survives reboots.
+The SCCM package cache is ephemeral; SCCM deletes packages after the Task Sequence completes. A scheduled task pointing to a script in the package cache would break the first time SCCM cleans up. This script copies the accelerator to `C:\Windows\Temp\PostOSD\`, which is outside the cache and survives reboots.
 
 ---
 
 ## The 3010 Reboot Wrapper
 
-The retry task doesn't just run the accelerator — it wraps it with a reboot handler:
+The retry task wraps the accelerator with a reboot handler:
 
 ```powershell
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\Windows\Temp\PostOSD\Post-OSD-Enrollment-Accelerator.ps1'
@@ -129,4 +129,4 @@ This means the accelerator can safely signal "reboot needed for IPv6" without ca
 
 ## Related Documentation
 
-- [Post-OSD-Enrollment-Accelerator.md](Post-OSD-Enrollment-Accelerator.md) — The provisioning engine this script schedules
+- [Post-OSD-Enrollment-Accelerator.md](Post-OSD-Enrollment-Accelerator.md): the provisioning engine this script schedules

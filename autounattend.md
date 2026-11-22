@@ -20,14 +20,14 @@ For a **zero-touch** enterprise deployment, there's no one sitting at the machin
 
 ## How It's Used
 
-**In SCCM Console:**
+In SCCM Console:
 
 1. Open your Task Sequence
 2. Find the **Apply Operating System Image** step
 3. In the step properties, browse to `autounattend.xml` in your SCCM package
 4. Save the step
 
-The file is applied during image injection — before the first boot. Windows Setup reads it automatically.
+The file is applied during image injection, before the first boot. Windows Setup reads it automatically.
 
 ---
 
@@ -112,6 +112,6 @@ The file is applied during image injection — before the first boot. Windows Se
 
 ## Notes
 
-- This file is **architecture-specific** (`amd64`) — add an x86 variant if needed
+- This file is architecture-specific (`amd64`); add an x86 variant if needed
 - The `BypassNRO` command uses `/f` for idempotency (safe to run multiple times)
-- This file is **org-agnostic** — works for any Windows 11 deployment without modification
+- This file is org-agnostic and works for any Windows 11 deployment without modification

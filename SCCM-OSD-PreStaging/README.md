@@ -2,15 +2,15 @@
 
 Quick reference for the WPF GUI tool that registers devices in SCCM before they arrive on-site.
 
-> **Full documentation:** [`SCCM-OSD-PreStaging.md`](SCCM-OSD-PreStaging.md) — architecture, SSL bypass, RBAC details, troubleshooting.
+> Full documentation: [`SCCM-OSD-PreStaging.md`](SCCM-OSD-PreStaging.md) covers architecture, SSL bypass, RBAC details, and troubleshooting.
 
 ---
 
 ## What Is It?
 
-A standalone WPF GUI tool that uses the **SCCM AdminService REST API** over HTTPS to register bare-metal devices in SCCM. No SCCM console required on the workstation — just .NET Framework and network access.
+A standalone WPF GUI tool that uses the SCCM AdminService REST API over HTTPS to register bare-metal devices in SCCM. No SCCM console is required on the workstation, just .NET Framework and network access.
 
-> **Companion tool:** [`DeploymentWizard.ps1`](../DeploymentWizard/DeploymentWizard.md) is used on-site during OSD. This tool is for remote/off-site pre-staging.
+> Companion tool: [`DeploymentWizard.ps1`](../DeploymentWizard/DeploymentWizard.md) is used on-site during OSD. This tool is for remote off-site pre-staging.
 
 ---
 
@@ -20,7 +20,7 @@ A standalone WPF GUI tool that uses the **SCCM AdminService REST API** over HTTP
 .\SCCM-OSD-PreStaging.ps1
 ```
 
-Or double-click the compiled EXE (PSWrap — no PowerShell console visible).
+Or double-click the compiled EXE (PSWrap), which shows no PowerShell console.
 
 ---
 
@@ -73,9 +73,9 @@ When the device is powered on and PXE-booted, SCCM already knows everything abou
 
 ## RBAC Setup (One-Time)
 
-1. **SCCM Console → Administration → Security → Security Roles**
-2. Right-click → **Import Security Role** → select the XML file
-3. **Administrative Users → Add User or Group** → pick your helpdesk team
+1. SCCM Console → Administration → Security → Security Roles
+2. Right-click → Import Security Role → select the XML file
+3. Administrative Users → Add User or Group → pick your helpdesk team
 4. Assign the `Helpdesk OSD Pre-Staging Operator` role
 5. Select the appropriate Security Scope
 

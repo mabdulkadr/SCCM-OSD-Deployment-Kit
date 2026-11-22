@@ -10,14 +10,14 @@ The interactive WPF wizard that runs in WinPE during the SCCM OSD Task Sequence.
 
 When the technician boots a device and reaches this step in the task sequence:
 
-1. **Wizard opens** and attempts an anonymous LDAP bind to load the OU list
-2. **Technician signs in** with domain credentials (validated against Active Directory)
-3. **Technician fills in**:
+1. Wizard opens and attempts an anonymous LDAP bind to load the OU list
+2. Technician signs in with domain credentials (validated against Active Directory)
+3. Technician fills in:
    - Computer name (max 15 characters, no special characters)
    - Target OU (live-search DataGrid, browse your AD structure)
    - Software to install (dynamic checkboxes)
    - OS language (English or Arabic)
-4. **Technician clicks Deploy** → wizard writes all values to TSEnvironment → closes
+4. Technician clicks Deploy, the wizard writes all values to TSEnvironment, and it closes
 
 The downstream task sequence steps then use these values automatically (domain join uses the OU and credentials, application install steps read the `App_*` variables, etc.).
 
@@ -48,7 +48,7 @@ The `-Software` parameter accepts an array of strings in this format:
 DisplayName|TSVariableName|DefaultChecked
 ```
 
-**Example:**
+Example:
 
 ```powershell
 -Software @(
@@ -82,29 +82,29 @@ Each checked box becomes `TRUE` in the corresponding `App_*` Task Sequence varia
 ### 🔐 AD Authentication
 
 - Validates credentials via `PrincipalContext.ValidateCredentials`
-- 5 failed attempts → Sign In button permanently disabled (must restart wizard)
-- Password stored in memory only — never written to disk or logs
+- 5 failed attempts permanently disable the Sign In button, so the wizard must be restarted
+- Password stored in memory only, never written to disk or logs
 - Credentials reused for authenticated LDAP bind
 
 ### 🗂 LDAP OU Browser
 
-- Pure .NET `LdapConnection` — no ADSI COM dependency
+- Pure .NET `LdapConnection`, with no ADSI COM dependency
 - Works in WinPE (where traditional `DirectorySearcher` fails)
 - Live search DataGrid with horizontal scroll
-- Breadcrumb path display: `DN` → `Top / Parent / Child` friendly format
+- Breadcrumb path display from `DN` to a `Top / Parent / Child` friendly format
 - Selected OU indicator turns green when picked
 
 ### 📝 Software Selection
 
 - Dynamic checkboxes generated from `-Software` parameter
 - Hover tooltip shows the TS variable name
-- Checked items → `TRUE` value in `App_*` TS variables
+- Checked items become `TRUE` values in `App_*` TS variables
 
 ### 🌐 Language Selection
 
 - Radio buttons for English (`en-US`) and Arabic (`ar-SA`)
-- Writes `OSDLanguage` variable — your TS uses it to choose which OS image to apply
-- One Task Sequence supports both languages — no separate TS needed
+- Writes the `OSDLanguage` variable, which your TS uses to choose which OS image to apply
+- One Task Sequence supports both languages, so no separate TS is needed
 
 ### 🛡 WinPE Safety
 
@@ -141,5 +141,5 @@ Each checked box becomes `TRUE` in the corresponding `App_*` Task Sequence varia
 
 ## Related Documentation
 
-- [Start-DeploymentWizard.md](Start-DeploymentWizard.md) — The TS wrapper that launches this wizard
-- [Technical Architecture](../technical-architecture.md) — Deep dive into wizard internals
+- [Start-DeploymentWizard.md](Start-DeploymentWizard.md): the TS wrapper that launches this wizard
+- [Technical Architecture](../technical-architecture.md): details of the wizard internals
